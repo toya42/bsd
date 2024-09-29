@@ -1,6 +1,6 @@
 name = "bsd"
 version = "0.1.0"
-license = "license"
+license = "MIT"
 author = "toya42"
 maintainer = "toya42.fortran@gmail.com"
 copyright = "Copyright 2024, toya42"
