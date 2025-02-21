@@ -75,7 +75,7 @@ contains
 
     unit = 101
     ! First pass: count the number of data lines and determine n_columns.
-    n_history = 0
+    n_history = -1
     open(unit, file=trim(filename), status='old', action='read', iostat=ios)
     if (ios /= 0) then
        print *, "Error reading history file: ", trim(filename)
@@ -86,7 +86,7 @@ contains
        read(unit, '(A)', iostat=ios) line
        if (ios /= 0) exit
        n_history = n_history + 1
-       if (n_history == 1) then
+       if (n_history == 0) then
           call Tokenize(line, tokens, num_fields)
           n_columns = num_fields
           deallocate(tokens)
@@ -94,28 +94,26 @@ contains
     end do
     close(unit)
 
+    print *,"n_history",n_history
+    print *,"n_columns",n_columns
+
     allocate(history_data(n_history, n_columns))
     ! Second pass: read the data.
     open(unit, file=trim(filename), status='old', action='read', iostat=ios)
-    count = 0
-    do
-       read(unit, '(A)', iostat=ios) line
+    allocate(temp_row(n_columns))
+    do count = 0,n_history
+       if(count==0) cycle
+
+       read(unit,*, iostat=ios) temp_row(:)
        if (ios /= 0) exit
-       count = count + 1
-       call Tokenize(line, tokens, num_fields)
-       if (num_fields /= n_columns) then
-          print *, "Error: Inconsistent number of columns in history file."
-          stop
-       end if
-       allocate(temp_row(n_columns))
-       do j = 1, n_columns
-          read(tokens(j), *) temp_row(j)
-       end do
+       print *,temp_row
        history_data(count, :) = temp_row(:)
-       deallocate(temp_row)
-       deallocate(tokens)
+       !deallocate(tokens)
     end do
     close(unit)
+    deallocate(temp_row)
+
+    !print *,history_data
   end subroutine ReadHistoryFile
 
   !----------------------------------------------------------
@@ -131,6 +129,7 @@ contains
     integer :: pos, start, len_line, token_count, i
     character(len=20) :: token
 
+    print *, line
     len_line = len_trim(line)
     token_count = 0
     start = 1
@@ -200,14 +199,15 @@ contains
 
     call ReadHistoryFile(history_filename, history_data, n_history, n_columns)
 
-    allocate(mode_vector(n_columns))
+    !print *, n_columns,K1,K2
+    allocate(mode_vector(n_columns-1))
     ! For each column, compute the mode.
-    do j = 1, n_columns
-       mode_vector(j) = ComputeModeFromVector(history_data(:, j))
+    do j = 2, n_columns
+       mode_vector(j-1) = ComputeModeFromVector(history_data(:, j))
     end do
 
     ! Reconstruct theta_mode from mode_vector.
-    pos = 2   ! Skip iteration number in column 1.
+    pos = 1   ! Skip iteration number in column 1.
     theta_mode%step%Ba    = mode_vector(pos); pos = pos + 1
     theta_mode%step%Bb    = mode_vector(pos); pos = pos + 1
     theta_mode%step%H     = mode_vector(pos); pos = pos + 1

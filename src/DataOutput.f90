@@ -40,6 +40,8 @@ contains
     implicit none
     character(len=*), intent(in) :: filename
     integer :: iostat_local
+    character(len=K1*10) :: c_low
+    character(len=K2*10) :: c_high
 
     history_length = 1 + 5 + 4 + 4*K1 + 4*K2
 
@@ -52,9 +54,11 @@ contains
     allocate(history_buffer(BUFFER_SIZE, history_length))
     buffer_count = 0
     ! Write CSV header.
-    write(history_unit, '(A)') 'Iteration, Ba, Bb, H, E0, Gamma, A_WL, mu_WL, sigma_G_WL, gamma_L_WL, ' // &
-                                 'LowPeak (A, mu, sigma_G, gamma_L) for each peak, ' // &
-                                 'HighPeak (A, mu, sigma_G, gamma_L) for each peak'
+    
+    c_low = repeat("A,m,sG,gL,",K1)
+    c_high = repeat("A,m,sG,gL,",K2-1)//"A,m,sG,gL"
+    write(history_unit,*) 'Iter,Ba,Bb,H,E0,Gamma,AW,mW,sGW,gLW,' // &
+                                 c_low // c_high
   end subroutine InitializeHistoryOutput
 
   !----------------------------------------------------------
