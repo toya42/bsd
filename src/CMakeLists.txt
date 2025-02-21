@@ -6,9 +6,35 @@ project(bayesian-spectral-deconvolution Fortran)
 
 set(EXECUTABLE mcmc.exe)
 
+if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
+   set(CMAKE_Fortran_FLAGS_DEBUG   "-O0                -warn all -standf08     \
+                                    -warn declarations -CB       -check uninit \
+                                    -check all         -fpe0     -traceback    \
+                                    -g                 -fpp      -Ddebug -lpthread -ldl")
+   set(CMAKE_Fortran_FLAGS_PROFILE "-O3 -fpp -march=native -mtune=native -p -lpthread -ldl")
+   set(CMAKE_Fortran_FLAGS_FAST    "-O3 -fpp -march=native -mtune=native  -lpthread -ldl ")
+endif()
+
+if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
+   set(CMAKE_Fortran_FLAGS_DEBUG   "-O0            -Wall -pedantic  -std=f2008                        \
+                                    -fbounds-check -Wuninitialized  -ffpe-trap=invalid,zero,overflow  \
+                                    -fbacktrace    -g -Ddebug -lpthread -ldl -Wl,--no-as-needed")
+   set(CMAKE_Fortran_FLAGS_PROFILE "-O3 -march=narive -mtune=native -p -lpthread -ldl -Wl,--no-as-needed")
+   set(CMAKE_Fortran_FLAGS_FAST    "-O3 -march=native -mtune=native -lpthread -ldl -Wl,--no-as-needed")
+endif()
+
+
 add_executable(${EXECUTABLE}
   precision.f90
   GlobalData.f90
   DataInput.f90
-  test.f90
+  DataOutput.f90
+  ModelFunctions.f90
+  LikelihoodAndPrior.f90
+  RNG.f90
+  MCMC_Update.f90
+  ReplicaExchange.f90
+  PosteriorStatistics.f90
+  ThermodynamicIntegration.f90
+  main.f90
   )

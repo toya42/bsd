@@ -75,7 +75,8 @@ contains
        read(line, *) energy_val, time_val, meas_inc, meas_ab
        E(i) = energy_val
        I_inc(i) = meas_inc * scale
-       I_ab(i) = meas_ab * scale
+       I_ab(i) = meas_ab
+       !print *, energy_val, time_val, meas_inc, meas_ab
     end do
     close(unit)
   end subroutine ReadExperimentalData
@@ -97,7 +98,7 @@ contains
     integer :: unit, ios
 
     unit = 20
-    print *, "Enter MCMC parameters filename (e.g., param_mcmc.txt):"
+    print *, "Enter MCMC parameters filename:"
     read(*, '(A)') paramFilename
 
     open(unit, file=trim(paramFilename), status='old', action='read', iostat=ios)
@@ -113,6 +114,12 @@ contains
     read(unit, *) K2, dummy      ! e.g., 4 K2
 
     close(unit)
+
+    if(L_rep>L_rep_max) then
+       print *, "Error Replica size, L_rep must be smaller than ", L_rep_max+1
+       stop
+    end if
+
 
     print *, "MCMC parameters:"
     print *, "  T_iter =", T_iter
