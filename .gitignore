@@ -37,3 +37,7 @@ tags
 # fpm
 build
 
+# log file
+fort.*
+log
+spec

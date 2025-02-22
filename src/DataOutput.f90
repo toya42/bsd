@@ -169,7 +169,7 @@ contains
   !----------------------------------------------------------
   subroutine ExportRestoredSpectrum(theta_est)
     implicit none
-    type(ModelParameters), intent(in) :: theta_est
+    type(ModelParameters) :: theta_est
     integer :: i
     real(fp_kind) :: restored_val
     if (.not. spectrum_initialized) then
@@ -179,7 +179,7 @@ contains
 
     do i = 1, N
        restored_val = f_ratio(E(i), theta_est)
-       print *,E(i),restored_val
+       !print *,E(i),restored_val
        write(spectrum_unit, *) E(i), I_inc(i), I_ab(i), restored_val
     end do
   end subroutine ExportRestoredSpectrum

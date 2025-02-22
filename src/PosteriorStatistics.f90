@@ -21,12 +21,12 @@ contains
   real(fp_kind) function ComputeModeFromVector(vec)
     implicit none
     real(fp_kind), intent(in) :: vec(:)
-    integer :: i, nbins
+    integer :: i!, nbins
     real(fp_kind) :: xmin, xmax, bin_width, value
     integer, allocatable :: counts(:)
     integer :: bin_idx, max_idx, count_max
 
-    nbins = NBINS
+    !nbins = NBINS
     xmin = minval(vec)
     xmax = maxval(vec)
     if (xmax == xmin) then
@@ -38,15 +38,23 @@ contains
     counts = 0
 
     do i = 1, size(vec)
+       !print *,'i1',i
        value = vec(i)
        bin_idx = int((value - xmin) / bin_width) + 1
-       if (bin_idx > nbins) bin_idx = nbins
+       !print *,'bin index,nbins',bin_idx,nbins
+       !if (bin_idx > nbins) then 
+       !  bin_idx = nbins
+       !end if
+       bin_idx = min(nbins,bin_idx)
        counts(bin_idx) = counts(bin_idx) + 1
+       !print *,'bin idx',bin_idx
     end do
 
     max_idx = 1
     count_max = counts(1)
     do i = 2, nbins
+          !print *,'i2',i
+
        if (counts(i) > count_max) then
           count_max = counts(i)
           max_idx = i
@@ -94,19 +102,24 @@ contains
     end do
     close(unit)
 
-    print *,"n_history",n_history
-    print *,"n_columns",n_columns
+    !print *,"n_history",n_history
+    !print *,"n_columns",n_columns
 
     allocate(history_data(n_history, n_columns))
     ! Second pass: read the data.
     open(unit, file=trim(filename), status='old', action='read', iostat=ios)
     allocate(temp_row(n_columns))
     do count = 0,n_history
-       if(count==0) cycle
+       !print *,'count',count
+       if(count==0) then
+          read(unit,'()')
+          cycle
+       end if
 
-       read(unit,*, iostat=ios) temp_row(:)
-       if (ios /= 0) exit
-       print *,temp_row
+       read(unit,*) temp_row
+       !print *,"temp_row",temp_row
+
+       !if (ios /= 0) exit
        history_data(count, :) = temp_row(:)
        !deallocate(tokens)
     end do
@@ -129,7 +142,7 @@ contains
     integer :: pos, start, len_line, token_count, i
     character(len=20) :: token
 
-    print *, line
+    !print *, line
     len_line = len_trim(line)
     token_count = 0
     start = 1
@@ -194,17 +207,29 @@ contains
     integer :: n_history, n_columns, j, pos
     real(fp_kind), allocatable, dimension(:) :: mode_vector
 
+    allocate(theta_mode%low(K1))
+    allocate(theta_mode%high(K2))
+
+
     ! Expected n_columns = 1 + 5 + 4 + 4*K1 + 4*K2.
     n_columns = 1 + 5 + 4 + 4*K1 + 4*K2
 
     call ReadHistoryFile(history_filename, history_data, n_history, n_columns)
-
+    !print *,'history data',history_data
     !print *, n_columns,K1,K2
     allocate(mode_vector(n_columns-1))
     ! For each column, compute the mode.
     do j = 2, n_columns
+       !print *,'j',j
        mode_vector(j-1) = ComputeModeFromVector(history_data(:, j))
+       !average
+       !print *,history_data(:,j)
+       !print *,size(history_data(:,j))
+       !mode_vector(j-1) = sum(history_data(:,j))/size(history_data(:,j))
+       !print *,mode_vector(j-1)
     end do
+
+    write(15,*) mode_vector
 
     ! Reconstruct theta_mode from mode_vector.
     pos = 1   ! Skip iteration number in column 1.

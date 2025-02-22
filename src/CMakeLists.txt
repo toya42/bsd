@@ -12,7 +12,8 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
                                     -check all         -fpe0     -traceback    \
                                     -g                 -fpp      -Ddebug -lpthread -ldl")
    set(CMAKE_Fortran_FLAGS_PROFILE "-O3 -fpp -march=native -mtune=native -p -lpthread -ldl")
-   set(CMAKE_Fortran_FLAGS_FAST    "-O3 -fpp -march=native -mtune=native  -lpthread -ldl ")
+   #set(CMAKE_Fortran_FLAGS_FAST    "-O3 -fpp -march=native -mtune=native  -lpthread -ldl ")
+   set(CMAKE_Fortran_FLAGS_FAST    "-O2 ")
 endif()
 
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
@@ -31,6 +32,7 @@ add_executable(${EXECUTABLE}
   DataOutput.f90
   ModelFunctions.f90
   LikelihoodAndPrior.f90
+  PriorProposal.f90
   RNG.f90
   MCMC_Update.f90
   ReplicaExchange.f90

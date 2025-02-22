@@ -162,8 +162,8 @@ contains
     real(fp_kind) :: x
     ! Scale the argument by 2*Gamma as specified.
     x = (E - theta_step%E0) / (2.0d0 * theta_step%Gamma)
-    !f_step = theta_step%Ba * E + theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
-    f_step = theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
+    f_step = theta_step%Ba * E + theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
+    !f_step = theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
   end function f_step
 
   !---------------------------------------------------------------------
@@ -211,16 +211,25 @@ contains
     implicit none
     real(fp_kind), intent(in) :: E
     type(ModelParameters), intent(in) :: theta
+
+    !print *,"f_ratio",f_ratio
+    !print *, theta%step
+    !print *,"step",f_step(E, theta%step)
+    !print *,"WL",f_WL(E, theta%WL)
+    !print *,"Low",f_low(E, theta%low)
+    !print *,"High",f_high(E, theta%high)
+
+
     f_ratio = f_step(E, theta%step) + f_WL(E, theta%WL) + f_low(E, theta%low) + f_high(E, theta%high)
 
-    if(f_ratio<0.0) then
-        print *,"negative f_ratio"
-        print *,"f_ratio",f_ratio
-        print *,"step",f_step(E, theta%step)
-        print *,"WL",f_WL(E, theta%WL)
-        print *,"Low",f_low(E, theta%low)
-        print *,"High",f_high(E, theta%high)
-    end if
+    !if(f_ratio<0.0) then
+    !    print *,"negative f_ratio"
+    !    print *,"f_ratio",f_ratio
+    !    print *,"step",f_step(E, theta%step)
+    !    print *,"WL",f_WL(E, theta%WL)
+    !    print *,"Low",f_low(E, theta%low)
+    !    print *,"High",f_high(E, theta%high)
+    !end if
 
   end function f_ratio
 

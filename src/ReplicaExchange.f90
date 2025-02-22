@@ -61,6 +61,7 @@ contains
           delta_swap = (beta_array(l+1) - beta_array(l)) * (logL_lower - logL_higher)
           if (0<delta_swap) then
             call SwapModelParameters(theta_array(l), theta_array(l+1))
+             print *,"exchange",l,"<->",l+1
           else if(delta_swap<-1000) then
             continue
           else 
@@ -68,6 +69,7 @@ contains
             call RandomUniform(u)
             if (u < min(1.0d0, r_swap)) then
               call SwapModelParameters(theta_array(l), theta_array(l+1))
+             print *,"exchange",l,"<->",l+1
             end if
           end if
        end do
@@ -79,6 +81,7 @@ contains
           delta_swap = (beta_array(l+1) - beta_array(l)) * (logL_lower - logL_higher)
           if (0<delta_swap) then
              call SwapModelParameters(theta_array(l), theta_array(l+1))
+             print *,"exchange",l,"<->",l+1
           else if(delta_swap<-1000) then
             continue
           else
@@ -86,6 +89,7 @@ contains
             call RandomUniform(u)
             if (u < min(1.0d0, r_swap)) then
               call SwapModelParameters(theta_array(l), theta_array(l+1))
+              print *,"exchange",l,"<->",l+1
             end if
           end if
        end do

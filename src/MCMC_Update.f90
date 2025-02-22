@@ -139,23 +139,36 @@ contains
   ! Generate a new candidate for a block by adding a small random perturbation.
   ! Uses the intrinsic random_number routine.
   !----------------------------------------------------------
-  subroutine ProposeNew(current_block, proposed_block)
-    implicit none
-    real(fp_kind), intent(inout) :: current_block(:)
-    real(fp_kind), intent(out), allocatable, dimension(:) :: proposed_block
-    integer(int32) :: i, block_size
-    real(fp_kind) :: perturb, sigma
+subroutine ProposeNew(current_block, proposed_block, prior_sigma)
+  implicit none
+  ! Input: current_block - current parameter values in the block.
+  !        prior_sigma   - prior standard deviations for each parameter in the block.
+  ! Output: proposed_block - newly proposed parameter values.
+  real(fp_kind), intent(in) :: current_block(:)
+  real(fp_kind), intent(in) :: prior_sigma(:)
+  real(fp_kind), intent(out), allocatable :: proposed_block(:)
+  integer(int32) :: i, block_size
+  real(fp_kind) :: perturb, sigma_i
 
-    block_size = size(current_block)
-    allocate(proposed_block(block_size))
-    sigma = 0.1d0   ! Tuning parameter; adjust as needed.
-    proposed_block = current_block
-    do i = 1, block_size
-       call RandomUniform(perturb)
-       ! Map perturbation from [0,1] to [-sigma, sigma]
-       proposed_block(i) = current_block(i) + sigma*(2.0d0*perturb - 1.0d0)
-    end do
-  end subroutine ProposeNew
+  ! Ensure the prior_sigma array has the same size as current_block.
+  block_size = size(current_block)
+  if (size(prior_sigma) /= block_size) then
+     print *, "Error: prior_sigma must have same size as current_block."
+     stop
+  end if
+
+  allocate(proposed_block(block_size))
+  proposed_block = current_block
+
+  do i = 1, block_size
+     call RandomUniform(perturb)  ! Generate a random number in [0, 1].
+     ! Compute proposal sigma as a fraction of the prior sigma.
+     sigma_i = GetProposalSigma(prior_sigma(i))
+     ! Map perturbation from [0, 1] to [-sigma_i, sigma_i] and add to current value.
+     proposed_block(i) = current_block(i) + sigma_i * (2.0d0 * perturb - 1.0d0)
+  end do
+
+end subroutine ProposeNew
 
   !----------------------------------------------------------
   ! Subroutine: BlockwiseMHUpdate

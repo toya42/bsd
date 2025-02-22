@@ -41,6 +41,7 @@ program BayesianDeconvolution
     allocate(theta_array(l)%high(K2))
   end do
 
+
   call InitializeHistoryOutput("log")
 
   !-----------------------------------------------------------
@@ -104,9 +105,11 @@ program BayesianDeconvolution
      end do
 
      ! Increment the exchange step counter.
-     exchange_step = exchange_step + 1
-     ! Perform odd–even replica exchange across the replicas.
-     call OddEvenExchange(theta_array, beta, exchange_step)
+    if(mod(t,50)==0) then
+        exchange_step = exchange_step + 1
+        ! Perform odd–even replica exchange across the replicas.
+        call OddEvenExchange(theta_array, beta, exchange_step)
+    end if
 
      ! Optionally: Save samples from the replica with beta = 1 (e.g., theta_array(L_rep))
      ! after the burn-in period (t > T_burn).
@@ -133,9 +136,14 @@ program BayesianDeconvolution
   print *, "Posterior sample for beta=1 chain:"
   print *, "Step function E0: ", theta_array(L_rep)%step%E0
 
+  !print *,1
   call ComputePosteriorMode("log", theta_mode)
+  !print *,2
   call InitializeSpectrumOutput("spec")
+  !print *,3
   call ExportRestoredSpectrum(theta_mode)
+  !print *,4
   call FinalizeSpectrumOutput()
+  !print *,5
 
 end program BayesianDeconvolution
