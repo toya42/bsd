@@ -48,11 +48,15 @@ program BayesianDeconvolution
   ! Initialize Beta (Inverse Temperatures) for Replicas
   ! In practice, beta might be read from a parameter file.
   !-----------------------------------------------------------
-  beta(1) = 0.1d0
-  beta(2) = 0.4d0
-  beta(3) = 0.7d0
-  beta(4) = 1.0d0
-
+  !beta(1) = 0.1d0
+  !beta(2) = 0.4d0
+  !beta(3) = 0.7d0
+  !beta(4) = 1.0d0
+  beta(1) = 1e-2
+  do l=2,L_rep
+    beta(l) = 1.225**(l-L_rep)
+    !print *,beta(l)
+   end do
   !-----------------------------------------------------------
   ! Initialize Model Parameters for Each Replica.
   ! For demonstration, we use the same initial guess for each replica.
@@ -61,27 +65,32 @@ program BayesianDeconvolution
      theta_array(l)%step%Ba = 0.0d0
      theta_array(l)%step%Bb = 0.0d0
      theta_array(l)%step%H  = 3.2d4
-     theta_array(l)%step%E0 = 2470.0d0
-     theta_array(l)%step%Gamma = 5.0d0
+     theta_array(l)%step%E0 = 2480.0d0
+     theta_array(l)%step%Gamma = 1.0d-2
 
-     theta_array(l)%WL%A_WL = 5.0d4
-     theta_array(l)%WL%mu_WL = 2470.0d0
-     theta_array(l)%WL%sigma_G_WL = 10.0d0
-     theta_array(l)%WL%gamma_L_WL = 10.0d0
+     theta_array(l)%WL%A_WL = 6.0d4
+     theta_array(l)%WL%mu_WL = 2480.0d0
+     theta_array(l)%WL%sigma_G_WL = 2.0d-1
+     theta_array(l)%WL%gamma_L_WL = 2.0d-1
 
      do i = 1, K1
-         theta_array(l)%low(i)%A = 1.5d4
-         theta_array(l)%low(i)%mu = 2470.0d0 - i    ! Ensure low-energy peaks are below E0
-         theta_array(l)%low(i)%sigma_G = 10.0d0
-         theta_array(l)%low(i)%gamma_L = 10.0d0
+         theta_array(l)%low(i)%A = 6.0d4
+         theta_array(l)%low(i)%mu = 2480.0d0 - (K1+1-i)*5    ! Ensure low-energy peaks are below E0
+         theta_array(l)%low(i)%sigma_G = 5.0d-1
+         theta_array(l)%low(i)%gamma_L = 5.0d-1
      end do
      do i = 1, K2
          theta_array(l)%high(i)%A = 1.0d4
-         theta_array(l)%high(i)%mu = 2480.0d0 + i   ! Ensure high-energy peaks are above E0
-         theta_array(l)%high(i)%sigma_G = 10.0d0
-         theta_array(l)%high(i)%gamma_L = 10.0d0
+         theta_array(l)%high(i)%mu = 2480.0d0 + i*5   ! Ensure high-energy peaks are above E0
+         theta_array(l)%high(i)%sigma_G = 1.0d0
+         theta_array(l)%high(i)%gamma_L = 1.0d0
      end do
   end do
+
+  !call InitializeSpectrumOutput("spec")
+  !print *,3
+  !call ExportRestoredSpectrum(theta_array(L_rep))
+  !stop
 
   !-----------------------------------------------------------
   ! Set the replica exchange counter to zero.
@@ -111,8 +120,9 @@ program BayesianDeconvolution
         call OddEvenExchange(theta_array, beta, exchange_step)
     end if
 
-     ! Optionally: Save samples from the replica with beta = 1 (e.g., theta_array(L_rep))
-     ! after the burn-in period (t > T_burn).
+     !if(t > T_burn) then 
+     !     call AppendHistoryEntry(t, theta_array(L_rep))
+     !end if
      call AppendHistoryEntry(t, theta_array(L_rep))
   end do
 

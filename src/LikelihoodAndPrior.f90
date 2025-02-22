@@ -42,8 +42,7 @@ contains
   end function ComputeLogLikelihood
 
   !----------------------------------------------------------
-  ! ComputeLogPrior: Evaluate log-prior assuming a normal distribution
-  ! for each parameter.
+  ! ComputeLogPrior: Evaluate log-prior
   !----------------------------------------------------------
   real(fp_kind) function ComputeLogPrior(theta)
     implicit none

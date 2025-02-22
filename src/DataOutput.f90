@@ -10,7 +10,7 @@ module DataOutput
   use ModelFunctions
   implicit none
 
-  integer, parameter :: BUFFER_SIZE = 100
+  integer, parameter :: BUFFER_SIZE = 500
   integer :: history_length
   ! Explanation:
   ! 1: iteration number
@@ -156,7 +156,7 @@ contains
     end if
     spectrum_initialized = .true.
     ! Write header for spectrum file.
-    write(spectrum_unit, '(A)') 'Energy, I_inc, I_ab, Restored_Spectrum'
+    write(spectrum_unit, '(A)') 'Energy, I_inc, I_ab, Restored_Spectrum, step, wl, low, high'
   end subroutine InitializeSpectrumOutput
 
   !----------------------------------------------------------
@@ -171,17 +171,36 @@ contains
     implicit none
     type(ModelParameters) :: theta_est
     integer :: i
-    real(fp_kind) :: restored_val
+    real(fp_kind) :: restored_val,step,wl,low,high
     if (.not. spectrum_initialized) then
        print *, "Spectrum output file not initialized."
        stop
     end if
 
     do i = 1, N
+       step = f_step(E(i), theta_est%step) 
+       wl = f_WL(E(i), theta_est%WL)
+       low = f_low(E(i), theta_est%low)
+       high = f_high(E(i), theta_est%high)
+
        restored_val = f_ratio(E(i), theta_est)
        !print *,E(i),restored_val
-       write(spectrum_unit, *) E(i), I_inc(i), I_ab(i), restored_val
+       write(spectrum_unit, *) E(i), I_inc(i), I_ab(i), restored_val,step,wl,low,high
     end do
+
+   write(16,*) 'step'
+   write(16,*) theta_est%step%E0
+   write(16,*) 'WL'
+   write(16,*) theta_est%WL%mu_WL
+   write(16,*) 'low'
+   do i=1,K1
+      write(16,*) i,theta_est%low(i)%mu
+   end do
+   write(16,*) 'high'
+   do i=1,K2
+      write(16,*) i,theta_est%high(i)%mu
+   end do
+
   end subroutine ExportRestoredSpectrum
 
   !----------------------------------------------------------

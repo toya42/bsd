@@ -33,6 +33,7 @@ add_executable(${EXECUTABLE}
   ModelFunctions.f90
   LikelihoodAndPrior.f90
   PriorProposal.f90
+  MultivariateProposal.f90
   RNG.f90
   MCMC_Update.f90
   ReplicaExchange.f90

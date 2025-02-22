@@ -1,7 +1,8 @@
 !=====================================================================
 ! Module: MCMC_Update
 ! Purpose: Perform blockwise Metropolis-Hastings updates on ModelParameters.
-!          Uses helper routines to extract and update parameter blocks.
+!          Uses helper routines to extract and update parameter blocks,
+!          and adapts proposal scale using the prior sigma.
 !=====================================================================
 module MCMC_Update
   use, intrinsic :: iso_fortran_env, only: int32, real64
@@ -9,6 +10,9 @@ module MCMC_Update
   use GlobalData
   use LikelihoodAndPrior
   use RNG
+  use PriorProposal   ! Provides GetProposalSigma and GetPriorSigma
+  use MultivariateProposal  ! New module for multivariate proposals.
+
   implicit none
 contains
 
@@ -16,8 +20,8 @@ contains
   ! Function: TotalBlocks
   ! Returns the total number of parameter blocks.
   ! Block mapping:
-  !   Block 1: Step (5 parameters)
-  !   Block 2: WL (4 parameters)
+  !   Block 1: Step parameters: [Ba, Bb, H, E0, Gamma] (5 parameters)
+  !   Block 2: WL parameters: [A_WL, mu_WL, sigma_G_WL, gamma_L_WL] (4 parameters)
   !   Blocks 3 to 2+K1: Each low-energy peak (4 parameters each)
   !   Blocks (3+K1) to (2+K1+K2): Each high-energy peak (4 parameters each)
   !----------------------------------------------------------
@@ -39,27 +43,22 @@ contains
     implicit none
     type(ModelParameters), intent(in) :: theta
     integer(int32), intent(in) :: block_id
-    real(fp_kind), intent(out), allocatable, dimension(:) :: block
-    integer :: total, idx
+    real(fp_kind), allocatable, intent(out) :: block(:)
+    integer :: idx
 
-    total = TotalBlocks()
     select case (block_id)
     case (1)
-       ! Block 1: Step parameters: [Ba, Bb, H, E0, Gamma]
        allocate(block(5))
        block = [ theta%step%Ba, theta%step%Bb, theta%step%H, theta%step%E0, theta%step%Gamma ]
     case (2)
-       ! Block 2: WL parameters: [A_WL, mu_WL, sigma_G_WL, gamma_L_WL]
        allocate(block(4))
        block = [ theta%WL%A_WL, theta%WL%mu_WL, theta%WL%sigma_G_WL, theta%WL%gamma_L_WL ]
     case default
        if (block_id <= 2 + K1) then
-          ! Blocks 3 to 2+K1: low-energy peaks.
           idx = block_id - 2
           allocate(block(4))
           block = [ theta%low(idx)%A, theta%low(idx)%mu, theta%low(idx)%sigma_G, theta%low(idx)%gamma_L ]
        else if (block_id <= 2 + K1 + K2) then
-          ! Blocks (3+K1) to (2+K1+K2): high-energy peaks.
           idx = block_id - (2 + K1)
           allocate(block(4))
           block = [ theta%high(idx)%A, theta%high(idx)%mu, theta%high(idx)%sigma_G, theta%high(idx)%gamma_L ]
@@ -92,20 +91,20 @@ contains
           print *, "Error: Block 1 size mismatch in UpdateBlock."
           stop
        end if
-       theta%step%Ba = new_block(1)
-       theta%step%Bb = new_block(2)
-       theta%step%H  = new_block(3)
-       theta%step%E0 = new_block(4)
+       theta%step%Ba    = new_block(1)
+       theta%step%Bb    = new_block(2)
+       theta%step%H     = new_block(3)
+       theta%step%E0    = new_block(4)
        theta%step%Gamma = new_block(5)
     case (2)
        if (size(new_block) /= 4) then
           print *, "Error: Block 2 size mismatch in UpdateBlock."
           stop
        end if
-       theta%WL%A_WL = new_block(1)
-       theta%WL%mu_WL = new_block(2)
-       theta%WL%sigma_G_WL = new_block(3)
-       theta%WL%gamma_L_WL = new_block(4)
+       theta%WL%A_WL       = new_block(1)
+       theta%WL%mu_WL       = new_block(2)
+       theta%WL%sigma_G_WL  = new_block(3)
+       theta%WL%gamma_L_WL  = new_block(4)
     case default
        if (block_id <= 2 + K1) then
           idx = block_id - 2
@@ -136,43 +135,41 @@ contains
 
   !----------------------------------------------------------
   ! Subroutine: ProposeNew
-  ! Generate a new candidate for a block by adding a small random perturbation.
-  ! Uses the intrinsic random_number routine.
+  ! Generate a new candidate for a block by adding a normally distributed
+  ! random perturbation to each parameter.
+  ! Inputs:
+  !   current_block : current parameter values.
+  !   prior_sigma   : prior sigma values for each parameter in the block.
+  ! Output:
+  !   proposed_block: newly proposed parameter values.
   !----------------------------------------------------------
-subroutine ProposeNew(current_block, proposed_block, prior_sigma)
-  implicit none
-  ! Input: current_block - current parameter values in the block.
-  !        prior_sigma   - prior standard deviations for each parameter in the block.
-  ! Output: proposed_block - newly proposed parameter values.
-  real(fp_kind), intent(in) :: current_block(:)
-  real(fp_kind), intent(in) :: prior_sigma(:)
-  real(fp_kind), intent(out), allocatable :: proposed_block(:)
-  integer(int32) :: i, block_size
-  real(fp_kind) :: perturb, sigma_i
+  subroutine ProposeNew(current_block, proposed_block, prior_sigma)
+    implicit none
+    real(fp_kind), intent(in) :: current_block(:)
+    real(fp_kind), intent(in) :: prior_sigma(:)
+    real(fp_kind), intent(out), allocatable :: proposed_block(:)
+    integer(int32) :: i, block_size
+    real(fp_kind) :: perturb, sigma_i
 
-  ! Ensure the prior_sigma array has the same size as current_block.
-  block_size = size(current_block)
-  if (size(prior_sigma) /= block_size) then
-     print *, "Error: prior_sigma must have same size as current_block."
-     stop
-  end if
+    block_size = size(current_block)
+    if (size(prior_sigma) /= block_size) then
+       print *, "Error: Size mismatch in ProposeNew between current_block and prior_sigma."
+       stop
+    end if
 
-  allocate(proposed_block(block_size))
-  proposed_block = current_block
-
-  do i = 1, block_size
-     call RandomUniform(perturb)  ! Generate a random number in [0, 1].
-     ! Compute proposal sigma as a fraction of the prior sigma.
-     sigma_i = GetProposalSigma(prior_sigma(i))
-     ! Map perturbation from [0, 1] to [-sigma_i, sigma_i] and add to current value.
-     proposed_block(i) = current_block(i) + sigma_i * (2.0d0 * perturb - 1.0d0)
-  end do
-
-end subroutine ProposeNew
+    allocate(proposed_block(block_size))
+    proposed_block = current_block
+    do i = 1, block_size
+       call NormalRandom(perturb)  ! Draw perturbation from N(0,1)
+       sigma_i = GetProposalSigma(prior_sigma(i))
+       proposed_block(i) = current_block(i) + sigma_i * perturb
+    end do
+  end subroutine ProposeNew
 
   !----------------------------------------------------------
   ! Subroutine: BlockwiseMHUpdate
-  ! Perform a Metropolis-Hastings update on a given block of parameters.
+  ! Purpose: Perform a Metropolis-Hastings update on a given block 
+  !          using a multivariate normal proposal with covariance.
   !----------------------------------------------------------
   subroutine BlockwiseMHUpdate(theta, block_id, beta_val)
     implicit none
@@ -180,53 +177,46 @@ end subroutine ProposeNew
     integer(int32), intent(in) :: block_id
     real(fp_kind), intent(in) :: beta_val
     real(fp_kind), allocatable :: current_block(:), proposed_block(:)
+    real(fp_kind), allocatable :: prior_sigma(:)
     type(ModelParameters) :: theta_candidate
     real(fp_kind) :: logPost_current, logPost_proposed, delta, u
 
     ! Extract the current block from theta.
     call ExtractBlock(theta, block_id, current_block)
+    
+    ! Get the prior sigma vector for this block.
+    ! Here we define a helper: GetPriorSigma (already defined in PriorProposal).
+    prior_sigma = GetPriorSigma(block_id)
+    
+    ! Generate a candidate update using a multivariate normal proposal.
+    call ProposeNewMV(current_block, prior_sigma, proposed_block)
 
-    ! Generate a candidate update.
-    call ProposeNew(current_block, proposed_block)
-
-    ! Copy current theta into theta_candidate.
+    ! Create a candidate copy of theta.
     theta_candidate = theta
-
-    ! Update theta_candidate with the proposed block.
     call UpdateBlock(theta_candidate, block_id, proposed_block)
 
-    ! Compute log-posterior for current and candidate theta.
+    ! Compute the log-posterior for current and candidate theta.
     logPost_current = ComputeLogPosterior(theta, beta_val)
     logPost_proposed = ComputeLogPosterior(theta_candidate, beta_val)
     delta = logPost_proposed - logPost_current
 
     call RandomUniform(u)
-    !print *,delta
-    if(0.0<delta) then
-       ! Accept proposal: update theta with proposed block.
+    if (u < exp(delta)) then
+       ! Accept the candidate update.
        call UpdateBlock(theta, block_id, proposed_block)
-    else if(delta<-1000) then
-       continue
-    else if (u < exp(delta)) then
-       ! Accept proposal: update theta with proposed block.
-       call UpdateBlock(theta, block_id, proposed_block)
-    else
-       ! Reject proposal: do nothing.
     end if
 
-    deallocate(current_block, proposed_block)
+    deallocate(current_block, proposed_block, prior_sigma)
   end subroutine BlockwiseMHUpdate
 
   !----------------------------------------------------------
-  ! Subroutine: MCMC_UpdateReplica
-  ! Update all blocks of theta for a single replica.
+  ! Subroutine: MCMC_UpdateReplica remains unchanged.
   !----------------------------------------------------------
   subroutine MCMC_UpdateReplica(theta, beta_val)
     implicit none
     type(ModelParameters), intent(inout) :: theta
     real(fp_kind), intent(in) :: beta_val
     integer :: b, total_blocks
-
     total_blocks = TotalBlocks()
     do b = 1, total_blocks
        call BlockwiseMHUpdate(theta, b, beta_val)
