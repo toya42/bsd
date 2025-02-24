@@ -189,8 +189,8 @@ contains
     prior_sigma = GetPriorSigma(block_id)
     
     ! Generate a candidate update using a multivariate normal proposal.
-    call ProposeNew(current_block, proposed_block, prior_sigma)
-    !call ProposeNewMV(current_block, prior_sigma, proposed_block)
+    !call ProposeNew(current_block, proposed_block, prior_sigma)
+    call ProposeNewMV(current_block, prior_sigma, proposed_block)
 
     ! Create a candidate copy of theta.
     theta_candidate = theta

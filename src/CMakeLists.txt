@@ -12,8 +12,8 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
                                     -check all         -fpe0     -traceback    \
                                     -g                 -fpp      -Ddebug -lpthread -ldl")
    set(CMAKE_Fortran_FLAGS_PROFILE "-O3 -fpp -march=native -mtune=native -p -lpthread -ldl")
-   #set(CMAKE_Fortran_FLAGS_FAST    "-O3 -fpp -march=native -mtune=native  -lpthread -ldl ")
-   set(CMAKE_Fortran_FLAGS_FAST    "-O2 ")
+   set(CMAKE_Fortran_FLAGS_FAST    "-O3 -fpp -march=native -mtune=native  -lpthread -ldl ")
+   #set(CMAKE_Fortran_FLAGS_FAST    "-O2 ")
 endif()
 
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)

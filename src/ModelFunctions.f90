@@ -163,44 +163,54 @@ contains
     ! Scale the argument by 2*Gamma as specified.
     x = (E - theta_step%E0) / (2.0d0 * theta_step%Gamma)
     f_step = theta_step%Ba * E + theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
-    !f_step = theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
+    !f_step = theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
   end function f_step
 
   !---------------------------------------------------------------------
   ! f_WL: White-line peak using a Voigt profile.
   !---------------------------------------------------------------------
-  real(fp_kind) function f_WL(E, theta_WL)
+  real(fp_kind) function f_WL(E, theta_WL, E0)
     implicit none
-    real(fp_kind), intent(in) :: E
+    real(fp_kind), intent(in) :: E, E0
     type(ParametersWL), intent(in) :: theta_WL
-    f_WL = theta_WL%A_WL * Voigt(E - theta_WL%mu_WL, theta_WL%sigma_G_WL, theta_WL%gamma_L_WL)
+    real(fp_kind) :: mu
+    mu = E0+theta_WL%mu_WL
+    !f_WL = theta_WL%A_WL * Voigt(E - theta_WL%mu_WL, theta_WL%sigma_G_WL, theta_WL%gamma_L_WL)
+    f_WL = theta_WL%A_WL * Voigt(E - mu, theta_WL%sigma_G_WL, theta_WL%gamma_L_WL)
+
   end function f_WL
 
   !---------------------------------------------------------------------
   ! f_low: Sum of Voigt profiles for low-energy peaks.
   !---------------------------------------------------------------------
-  real(fp_kind) function f_low(E, theta_low)
+  real(fp_kind) function f_low(E, theta_low, E0)
     implicit none
-    real(fp_kind), intent(in) :: E
+    real(fp_kind), intent(in) :: E, E0
     type(ParametersPeak), dimension(:), intent(in) :: theta_low
     integer(int32) :: k
+    real(fp_kind) :: mu
+
     f_low = 0.0d0
     do k = 1, size(theta_low)
-       f_low = f_low + theta_low(k)%A * Voigt(E - theta_low(k)%mu, theta_low(k)%sigma_G, theta_low(k)%gamma_L)
+       mu = E0-theta_low(k)%mu
+       f_low = f_low + theta_low(k)%A * Voigt(E - mu, theta_low(k)%sigma_G, theta_low(k)%gamma_L)
     end do
   end function f_low
 
   !---------------------------------------------------------------------
   ! f_high: Sum of Voigt profiles for high-energy peaks.
   !---------------------------------------------------------------------
-  real(fp_kind) function f_high(E, theta_high)
+  real(fp_kind) function f_high(E, theta_high, E0)
     implicit none
-    real(fp_kind), intent(in) :: E
+    real(fp_kind), intent(in) :: E, E0
     type(ParametersPeak), dimension(:), intent(in) :: theta_high
     integer(int32) :: j
+    real(fp_kind) :: mu
+
     f_high = 0.0d0
     do j = 1, size(theta_high)
-       f_high = f_high + theta_high(j)%A * Voigt(E - theta_high(j)%mu, theta_high(j)%sigma_G, theta_high(j)%gamma_L)
+       mu = E0+theta_high(j)%mu
+       f_high = f_high + theta_high(j)%A * Voigt(E - mu, theta_high(j)%sigma_G, theta_high(j)%gamma_L)
     end do
   end function f_high
 
@@ -220,7 +230,9 @@ contains
     !print *,"High",f_high(E, theta%high)
 
 
-    f_ratio = f_step(E, theta%step) + f_WL(E, theta%WL) + f_low(E, theta%low) + f_high(E, theta%high)
+    f_ratio = f_step(E, theta%step) + f_WL(E, theta%WL, theta%step%E0) &
+                                   + f_low(E, theta%low, theta%step%E0)&
+                                   + f_high(E, theta%high, theta%step%E0)
 
     !if(f_ratio<0.0) then
     !    print *,"negative f_ratio"

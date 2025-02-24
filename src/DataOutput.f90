@@ -10,7 +10,7 @@ module DataOutput
   use ModelFunctions
   implicit none
 
-  integer, parameter :: BUFFER_SIZE = 500
+  integer, parameter :: BUFFER_SIZE = 5000
   integer :: history_length
   ! Explanation:
   ! 1: iteration number
@@ -179,11 +179,11 @@ contains
 
     do i = 1, N
        step = f_step(E(i), theta_est%step) *I_inc(i)
-       wl = f_WL(E(i), theta_est%WL)*I_inc(i)
-       low = f_low(E(i), theta_est%low)*I_inc(i)
-       high = f_high(E(i), theta_est%high)*I_inc(i)
+       wl = f_WL(E(i), theta_est%WL, theta_est%step%E0)*I_inc(i)
+       low = f_low(E(i), theta_est%low, theta_est%step%E0)*I_inc(i)
+       high = f_high(E(i), theta_est%high, theta_est%step%E0)*I_inc(i)
        fr = f_ratio(E(i), theta_est)
-       restored_val = f_ratio(E(i), theta_est)*I_inc(i)
+       restored_val = fr*I_inc(i)
        !print *,E(i),restored_val
        write(spectrum_unit, *) E(i), I_inc(i), I_ab(i), fr, restored_val,step,wl,low,high
     end do

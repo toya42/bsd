@@ -38,6 +38,6 @@ tags
 build
 
 # log file
-fort.*
-log
-spec
+run/fort.*
+run/log
+run/spec*

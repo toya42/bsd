@@ -12,7 +12,7 @@ module GlobalData
   ! mathematical constant
   real(fp_kind), parameter :: pi=4.0_real64*atan(1.0_real64)
 
-  integer(int32), parameter :: L_rep_max = 20
+  integer(int32), parameter :: L_rep_max = 50
   ! These will be set by reading the experimental data file and the MCMC parameter file.
   integer(int32) :: N = 0          ! Number of measurement points (to be read from CSV)
   integer(int32) :: T_iter = 0     ! Total number of MCMC iterations
