@@ -56,7 +56,7 @@ contains
     ! Write CSV header.
     
     c_low = repeat("A,m,sG,gL,",K1)
-    c_high = repeat("A,m,sG,gL,",K2-1)//"A,m,sG,gL"
+    c_high = repeat("A,m,sG,gL,",K2)//"A,m,sG,gL"
     write(history_unit,*) 'Iter,Ba,Bb,H,E0,Gamma,AW,mW,sGW,gLW,' // &
                                  c_low // c_high
   end subroutine InitializeHistoryOutput
@@ -156,7 +156,7 @@ contains
     end if
     spectrum_initialized = .true.
     ! Write header for spectrum file.
-    write(spectrum_unit, '(A)') 'Energy, I_inc, I_ab, Restored_Spectrum, step, wl, low, high'
+    write(spectrum_unit, '(A)') 'Energy, I_inc, I_ab, f_ratio, Restored_Spectrum, step, wl, low, high'
   end subroutine InitializeSpectrumOutput
 
   !----------------------------------------------------------
@@ -171,23 +171,24 @@ contains
     implicit none
     type(ModelParameters) :: theta_est
     integer :: i
-    real(fp_kind) :: restored_val,step,wl,low,high
+    real(fp_kind) :: restored_val,step,wl,low,high,fr
     if (.not. spectrum_initialized) then
        print *, "Spectrum output file not initialized."
        stop
     end if
 
     do i = 1, N
-       step = f_step(E(i), theta_est%step) 
-       wl = f_WL(E(i), theta_est%WL)
-       low = f_low(E(i), theta_est%low)
-       high = f_high(E(i), theta_est%high)
-
-       restored_val = f_ratio(E(i), theta_est)
+       step = f_step(E(i), theta_est%step) *I_inc(i)
+       wl = f_WL(E(i), theta_est%WL)*I_inc(i)
+       low = f_low(E(i), theta_est%low)*I_inc(i)
+       high = f_high(E(i), theta_est%high)*I_inc(i)
+       fr = f_ratio(E(i), theta_est)
+       restored_val = f_ratio(E(i), theta_est)*I_inc(i)
        !print *,E(i),restored_val
-       write(spectrum_unit, *) E(i), I_inc(i), I_ab(i), restored_val,step,wl,low,high
+       write(spectrum_unit, *) E(i), I_inc(i), I_ab(i), fr, restored_val,step,wl,low,high
     end do
 
+   write(16,*) '==peak position=='
    write(16,*) 'step'
    write(16,*) theta_est%step%E0
    write(16,*) 'WL'

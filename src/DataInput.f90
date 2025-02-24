@@ -25,7 +25,7 @@ contains
     character(len=256) :: line
     integer :: unit, ios, count_lines, i
     real(fp_kind) :: energy_val, time_val, meas_inc, meas_ab
-    real(fp_kind), parameter :: scale = 1.0d3
+    real(fp_kind), parameter :: scale = 1.0d5
     ! First pass: count the number of data lines (excluding header)
     unit = 10
     print *, "Enter experimental data CSV filename:"
