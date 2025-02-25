@@ -340,10 +340,10 @@ contains
     if (u < exp(delta)) then
        ! Accept the candidate update.
        call UpdateFull(theta, proposed_full)
-       accepted_proposals = accepted_proposals+1
+       accepted_proposals(l) = accepted_proposals(l)+1
     end if
 
-    total_proposals = total_proposals+1
+    total_proposals(l) = total_proposals(l)+1
 
     deallocate(current_full, proposed_full, prior_sigma)
   end subroutine FullMHUpdate

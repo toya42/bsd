@@ -193,14 +193,14 @@ contains
    write(16,*) 'step'
    write(16,*) e0
    write(16,*) 'WL'
-   write(16,*) e0+theta_est%WL%mu_WL, theta_est%WL%A_WL
+   write(16,*) e0+theta_est%WL%mu_WL, theta_est%WL%A_WL, theta_est%WL%sigma_G_WL, theta_est%WL%gamma_L_WL
    write(16,*) 'low'
    do i=1,K1
-      write(16,*) i,e0-theta_est%low(i)%mu, theta_est%low(i)%A
+      write(16,*) i,e0-theta_est%low(i)%mu, theta_est%low(i)%A, theta_est%low(i)%sigma_G, theta_est%low(i)%gamma_L
    end do
    write(16,*) 'high'
    do i=1,K2
-      write(16,*) i,e0+theta_est%high(i)%mu, theta_est%high(i)%A
+      write(16,*) i,e0+theta_est%high(i)%mu, theta_est%high(i)%A, theta_est%high(i)%sigma_G, theta_est%high(i)%gamma_L
    end do
 
    emin = E(1)

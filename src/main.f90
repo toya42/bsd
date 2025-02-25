@@ -69,19 +69,19 @@ program BayesianDeconvolution
      theta_array(l)%step%E0 = 2480.0d0
      theta_array(l)%step%Gamma = 1.0d-1
 
-     theta_array(l)%WL%A_WL = 2.0d-5
+     theta_array(l)%WL%A_WL = 2.0d-6
      theta_array(l)%WL%mu_WL = 0.0d0
      theta_array(l)%WL%sigma_G_WL = 2.0d-1
      theta_array(l)%WL%gamma_L_WL = 2.0d-1
 
      do i = 1, K1
-         theta_array(l)%low(i)%A = 0.0d0
-         theta_array(l)%low(i)%mu = real((K1+1-i)*5)    ! Ensure low-energy peaks are below E0
+         theta_array(l)%low(i)%A = 2.0d-6
+         theta_array(l)%low(i)%mu = real((K1+1-i))    ! Ensure low-energy peaks are below E0
          theta_array(l)%low(i)%sigma_G = 2.0d-1
          theta_array(l)%low(i)%gamma_L = 2.0d-1
      end do
      do i = 1, K2
-         theta_array(l)%high(i)%A = 0.0d0
+         theta_array(l)%high(i)%A = 2.0d-6
          theta_array(l)%high(i)%mu = real(i*10)   ! Ensure high-energy peaks are above E0
          theta_array(l)%high(i)%sigma_G = 2.0d-1
          theta_array(l)%high(i)%gamma_L = 2.0d-1
@@ -104,24 +104,27 @@ program BayesianDeconvolution
   ! Main MCMC Loop with Replica Exchange.
   !-----------------------------------------------------------
   do t = 1, T_iter
-    if(mod(t,100)==0) then
+    if(mod(t,100)==0 .and. t<=T_burn/2) then
       do l=1,L_rep
         accept_ratio = real(accepted_proposals(l))/real(total_proposals(l))*100
-      if(accept_ratio<20.0) then
-        c_proposal(l) = c_proposal(l)*0.9
-      else if(accept_ratio>50.0) then
-        c_proposal(l) = c_proposal(l)*1.1
-      end if
-      if(mod(t,500)==0) then
-        print *,'iteration:',t
-        print *,'Replica:',l
-        print '("accept ratio(%) = ",f6.2)',accept_ratio
-        !print '(i5,"/",i5)', accepted_proposals,total_proposals
-        print '("c_proposal(l) = ",f8.4)',c_proposal(l)
-      end if
-      call InitializeCounters()
+        if(accept_ratio<20.0) then
+          c_proposal(l) = c_proposal(l)*0.9
+        else if(accept_ratio>50.0) then
+          c_proposal(l) = c_proposal(l)*1.1
+        end if
+        if(t==T_burn/2) then
+          print *,'iteration:',t
+          print *,'Replica:',l
+          !print '("accept ratio(%) = ",f6.2)',accept_ratio
+          !print '(i5,"/",i5)', accepted_proposals(l),total_proposals(l)
+          print '("c_proposal(l) = ",f9.5)',c_proposal(l)
+        end if
       end do
-    end if  
+      call InitializeCounters()
+    end if
+    if(mod(t,500)==0) then
+      print *,'iteration:',t
+    end if
     do l = 1, L_rep
         ! Update the parameters for replica l using blockwise MH updates.
         call MCMC_UpdateReplica(theta_array(l), beta(l),l)
