@@ -52,42 +52,42 @@ contains
 
     log_prior = 0.0d0
     ! Step function priors:
-    log_prior = log_prior + NormalLogPDF(theta%step%Ba,    mu_Ba,    sigma_Ba)
-    log_prior = log_prior + NormalLogPDF(theta%step%Bb,    mu_Bb,    sigma_Bb)
-    log_prior = log_prior + NormalLogPDF(theta%step%H,     mu_H,     sigma_H)
-    log_prior = log_prior + NormalLogPDF(theta%step%E0,    mu_E0,    sigma_E0)
-    log_prior = log_prior + NormalLogPDF(theta%step%Gamma, mu_Gamma, sigma_Gamma)
+    !log_prior = log_prior + GammaLogPDF (theta%step%Ba,    alpha_Ba,    beta_Ba)
+    log_prior = log_prior + GammaLogPDF(theta%step%Bb, alpha_Bb, beta_Bb)
+    log_prior = log_prior + GammaLogPDF(theta%step%H,  alpha_H,  beta_H)
+    log_prior = log_prior + NormalLogPDF(theta%step%E0, mu_E0, sigma_E0)
+    log_prior = log_prior + UniformLogPDF(theta%step%Gamma, a_Gamma, b_Gamma)
 
     ! White-line priors:
-    log_prior = log_prior + NormalLogPDF(theta%WL%A_WL,       mu_A_WL,       sigma_A_WL)
-    log_prior = log_prior + NormalLogPDF(theta%WL%mu_WL,       mu_mu_WL,      sigma_mu_WL)
-    log_prior = log_prior + NormalLogPDF(theta%WL%sigma_G_WL,  mu_sigma_G_WL, sigma_sigma_G_WL)
-    log_prior = log_prior + NormalLogPDF(theta%WL%gamma_L_WL,  mu_gamma_L_WL, sigma_gamma_L_WL)
+    log_prior = log_prior + GammaLogPDF(theta%WL%A_WL, alpha_A_WL, beta_A_WL)
+    log_prior = log_prior + NormalLogPDF(theta%WL%mu_WL, mu_mu_WL, sigma_mu_WL)
+    log_prior = log_prior + UniformLogPDF(theta%WL%sigma_G_WL, a_sigma_G_WL, b_sigma_G_WL)
+    log_prior = log_prior + UniformLogPDF(theta%WL%gamma_L_WL, a_gamma_L_WL, b_gamma_L_WL)
 
     ! Low-energy peak priors:
     do k = 1, size(theta%low)
-       log_prior = log_prior + NormalLogPDF(theta%low(k)%A,       mu_low_A,       sigma_low_A)
-       log_prior = log_prior + NormalLogPDF(theta%low(k)%mu,      mu_low_mu,      sigma_low_mu)
-       log_prior = log_prior + NormalLogPDF(theta%low(k)%sigma_G, mu_low_sigma_G, sigma_low_sigma_G)
-       log_prior = log_prior + NormalLogPDF(theta%low(k)%gamma_L, mu_low_gamma_L, sigma_low_gamma_L)
-       ! Optionally enforce constraint: low-energy mu < E0.
-       if (theta%low(k)%mu >= theta%step%E0) then
-          ComputeLogPrior = -1.0d300
-          return
-       end if
+       log_prior = log_prior + GammaLogPDF(theta%low(k)%A, alpha_low_A, beta_low_A)
+       log_prior = log_prior + UniformLogPDF(theta%low(k)%mu, a_low_mu, b_low_mu)
+       log_prior = log_prior + UniformLogPDF(theta%low(k)%sigma_G, a_low_sigma_G, b_low_sigma_G)
+       log_prior = log_prior + UniformLogPDF(theta%low(k)%gamma_L, a_low_gamma_L, b_low_gamma_L)
+       !! Optionally enforce constraint: low-energy mu < E0.
+       !if (theta%low(k)%mu >= theta%step%E0) then
+       !   ComputeLogPrior = -1.0d300
+       !   return
+       !end if
     end do
 
     ! High-energy peak priors:
     do j = 1, size(theta%high)
-       log_prior = log_prior + NormalLogPDF(theta%high(j)%A,       mu_high_A,       sigma_high_A)
-       log_prior = log_prior + NormalLogPDF(theta%high(j)%mu,      mu_high_mu,      sigma_high_mu)
-       log_prior = log_prior + NormalLogPDF(theta%high(j)%sigma_G, mu_high_sigma_G, sigma_high_sigma_G)
-       log_prior = log_prior + NormalLogPDF(theta%high(j)%gamma_L, mu_high_gamma_L, sigma_high_gamma_L)
+       log_prior = log_prior + GammaLogPDF(theta%high(j)%A, alpha_high_A, beta_high_A)
+       log_prior = log_prior + UniformLogPDF(theta%high(j)%mu, a_high_mu, b_high_mu)
+       log_prior = log_prior + UniformLogPDF(theta%high(j)%sigma_G, a_high_sigma_G, b_high_sigma_G)
+       log_prior = log_prior + UniformLogPDF(theta%high(j)%gamma_L, a_high_gamma_L, b_high_gamma_L)
        ! Optionally enforce constraint: high-energy mu > E0.
-       if (theta%high(j)%mu <= theta%step%E0) then
-          ComputeLogPrior = -1.0d300
-          return
-       end if
+       !if (theta%high(j)%mu <= theta%step%E0) then
+       !   ComputeLogPrior = -1.0d300
+       !   return
+       !end if
     end do
 
     ComputeLogPrior = log_prior

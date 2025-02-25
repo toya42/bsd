@@ -152,7 +152,7 @@ contains
 
   !---------------------------------------------------------------------
   ! f_step: Smoothed step function modeling the absorption edge.
-  ! f_step = (Ba*E + Bb) + H * Φ((E - E0)/(2*Gamma)),
+  ! f_step =  Bb + H * Φ((E - E0)/(0.5*Gamma)), (Ba:not used)
   ! where Φ(x) = 0.5 + (1/π) atan(x)
   !---------------------------------------------------------------------
   real(fp_kind) function f_step(E, theta_step)
@@ -161,9 +161,10 @@ contains
     type(ParametersStep), intent(in) :: theta_step
     real(fp_kind) :: x
     ! Scale the argument by 2*Gamma as specified.
-    x = (E - theta_step%E0) / (2.0d0 * theta_step%Gamma)
-    f_step = theta_step%Ba * E + theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
-    !f_step = theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
+    x = (E - theta_step%E0) / (0.5 * theta_step%Gamma)
+    !f_step = theta_step%Ba * (E - theta_step%E0) + theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
+    !f_step = theta_step%Ba * E + theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
+    f_step = theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
   end function f_step
 
   !---------------------------------------------------------------------

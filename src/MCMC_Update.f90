@@ -69,6 +69,50 @@ contains
     end select
   end subroutine ExtractBlock
 
+!----------------------------------------------------------
+  ! Subroutine: ExtractFull
+  ! Extracts full parameters from the full ModelParameters.
+  ! Input:
+  !   theta     : full model parameters.
+  ! Output:
+  !   block     : real array containing the all parameters.
+  !----------------------------------------------------------
+  subroutine ExtractFull(theta, full)
+    implicit none
+    type(ModelParameters), intent(in) :: theta
+    real(fp_kind), allocatable, intent(out) :: full(:)
+    integer(int32) :: i,idx
+
+    allocate(full(5+4+K1*4+K2*4))
+
+    full(1) = theta%step%Ba
+    full(2) = theta%step%Bb
+    full(3) = theta%step%H
+    full(4) = theta%step%E0
+    full(5) = theta%step%Gamma
+
+    full(6) = theta%WL%A_WL
+    full(7) = theta%WL%mu_WL
+    full(8) = theta%WL%sigma_G_WL
+    full(9) = theta%WL%gamma_L_WL
+    
+    i = 10
+    do idx=1,K1
+      full(i)   = theta%low(idx)%A
+      full(i+1) = theta%low(idx)%mu
+      full(i+2) = theta%low(idx)%sigma_G
+      full(i+3) = theta%low(idx)%gamma_L
+      i=i+4
+    end do
+    do idx=1,K2
+      full(i)   = theta%high(idx)%A
+      full(i+1) = theta%high(idx)%mu
+      full(i+2) = theta%high(idx)%sigma_G
+      full(i+3) = theta%high(idx)%gamma_L
+      i=i+4
+    end do
+
+  end subroutine ExtractFull
   !----------------------------------------------------------
   ! Subroutine: UpdateBlock
   ! Writes new values from a candidate block into the full ModelParameters.
@@ -132,6 +176,50 @@ contains
        end if
     end select
   end subroutine UpdateBlock
+
+  !----------------------------------------------------------
+  ! Subroutine: UpdateFull
+  ! Writes new values from a candidate parameters into the full ModelParameters.
+  ! Input:
+  !   full : real array with new parameter values.
+  ! In/out:
+  !   theta     : full model parameters to be updated.
+  !----------------------------------------------------------
+  subroutine UpdateFull(theta, full)
+    implicit none
+    type(ModelParameters), intent(inout) :: theta
+    real(fp_kind), intent(in) :: full(:)
+    integer :: idx,i
+
+    theta%step%Ba    = full(1)      
+    theta%step%Bb    = full(2)
+    theta%step%H     = full(3)
+    theta%step%E0    = full(4)
+    theta%step%Gamma = full(5)
+
+    theta%WL%A_WL       = full(6)
+    theta%WL%mu_WL      = full(7)
+    theta%WL%sigma_G_WL = full(8)
+    theta%WL%gamma_L_WL = full(9)
+    
+    i = 10
+    do idx=1,K1
+      theta%low(idx)%A        = full(i)
+      theta%low(idx)%mu       = full(i+1)
+      theta%low(idx)%sigma_G  = full(i+2)
+      theta%low(idx)%gamma_L  = full(i+3)
+      i=i+4
+    end do
+    do idx=1,K2
+      theta%high(idx)%A        = full(i)
+      theta%high(idx)%mu       = full(i+1)
+      theta%high(idx)%sigma_G  = full(i+2)
+      theta%high(idx)%gamma_L  = full(i+3)
+      i=i+4
+    end do
+
+  end subroutine UpdateFull
+
 
   !----------------------------------------------------------
   ! Subroutine: ProposeNew
@@ -211,9 +299,63 @@ contains
   end subroutine BlockwiseMHUpdate
 
   !----------------------------------------------------------
-  ! Subroutine: MCMC_UpdateReplica remains unchanged.
+  ! Subroutine: FullMHUpdate
+  ! Purpose: Perform a Metropolis-Hastings update
+  !          using a multivariate normal proposal with covariance.
+  !----------------------------------------------------------
+  subroutine FullMHUpdate(theta, beta_val)
+    implicit none
+    type(ModelParameters), intent(inout) :: theta
+    real(fp_kind), intent(in) :: beta_val
+    real(fp_kind), allocatable :: current_full(:), proposed_full(:)
+    real(fp_kind), allocatable :: prior_sigma(:)
+    type(ModelParameters) :: theta_candidate
+    real(fp_kind) :: logPost_current, logPost_proposed, delta, u
+
+    ! Extract the current parameters from theta.
+    call ExtractFull(theta, current_full)
+    
+    ! Get the prior sigma vector for all parameters.
+    prior_sigma = GetPriorSigmaFull()
+    
+    ! Generate a candidate update using a multivariate normal proposal.
+    !call ProposeNew(current_block, proposed_block, prior_sigma)
+    call ProposeNewMV(current_full, prior_sigma, proposed_full)
+
+    ! Create a candidate copy of theta.
+    theta_candidate = theta
+    call UpdateFull(theta_candidate, proposed_full)
+
+    ! Compute the log-posterior for current and candidate theta.
+    logPost_current = ComputeLogPosterior(theta, beta_val)
+    logPost_proposed = ComputeLogPosterior(theta_candidate, beta_val)
+    delta = logPost_proposed - logPost_current
+
+    call RandomUniform(u)
+    if (u < exp(delta)) then
+       ! Accept the candidate update.
+       call UpdateFull(theta, proposed_full)
+    end if
+
+    deallocate(current_full, proposed_full, prior_sigma)
+  end subroutine FullMHUpdate
+
+  !----------------------------------------------------------
+  ! Subroutine: MCMC_UpdateReplica full/blockwise
   !----------------------------------------------------------
   subroutine MCMC_UpdateReplica(theta, beta_val)
+    implicit none
+    type(ModelParameters), intent(inout) :: theta
+    real(fp_kind), intent(in) :: beta_val
+    !integer :: b, total_blocks
+    !total_blocks = TotalBlocks()
+    !do b = 1, total_blocks
+       !call BlockwiseMHUpdate(theta, b, beta_val)
+    !end do
+    call FullMHUpdate(theta, beta_val)
+  end subroutine MCMC_UpdateReplica
+
+  subroutine MCMC_block_UpdateReplica(theta, beta_val)
     implicit none
     type(ModelParameters), intent(inout) :: theta
     real(fp_kind), intent(in) :: beta_val
@@ -222,6 +364,7 @@ contains
     do b = 1, total_blocks
        call BlockwiseMHUpdate(theta, b, beta_val)
     end do
-  end subroutine MCMC_UpdateReplica
+  end subroutine MCMC_block_UpdateReplica
+
 
 end module MCMC_Update

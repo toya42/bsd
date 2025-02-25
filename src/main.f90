@@ -63,12 +63,12 @@ program BayesianDeconvolution
   !-----------------------------------------------------------
   do l = 1, L_rep
      theta_array(l)%step%Ba = 0.0d0
-     theta_array(l)%step%Bb = 0.0d0
-     theta_array(l)%step%H  = 0.5d-5
+     theta_array(l)%step%Bb = 5.0d-8
+     theta_array(l)%step%H  = 5.0d-6
      theta_array(l)%step%E0 = 2480.0d0
      theta_array(l)%step%Gamma = 1.0d-2
 
-     theta_array(l)%WL%A_WL = 0.0d0
+     theta_array(l)%WL%A_WL = 2.0d-5
      theta_array(l)%WL%mu_WL = 0.0d0
      theta_array(l)%WL%sigma_G_WL = 2.0d-1
      theta_array(l)%WL%gamma_L_WL = 2.0d-1
@@ -87,9 +87,9 @@ program BayesianDeconvolution
      end do
   end do
 
-  call InitializeSpectrumOutput("spec0")
+  !call InitializeSpectrumOutput("spec0")
   !print *,3
-  call ExportRestoredSpectrum(theta_array(L_rep))
+  !call ExportRestoredSpectrum(theta_array(L_rep))
   !stop
 
   !-----------------------------------------------------------
@@ -107,6 +107,7 @@ program BayesianDeconvolution
      do l = 1, L_rep
         ! Update the parameters for replica l using blockwise MH updates.
         call MCMC_UpdateReplica(theta_array(l), beta(l))
+        call MCMC_block_UpdateReplica(theta_array(l), beta(l))
         ! Compute the current log-likelihood for replica l.
         currentLogL = ComputeLogLikelihood(theta_array(l))
         ! Update the likelihood accumulator for replica l.
