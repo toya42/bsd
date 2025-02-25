@@ -16,12 +16,13 @@ program BayesianDeconvolution
   use ThermodynamicIntegration
   use PosteriorStatistics
   use RNG
+  use PriorProposal, only : c_proposal
   implicit none
 
   integer(int32) :: t, l, exchange_step, i
   type(ModelParameters), allocatable, dimension(:) :: theta_array
   type(ModelParameters) :: theta_mode
-  real(fp_kind) :: currentLogL
+  real(fp_kind) :: currentLogL,accept_ratio
   real(fp_kind), allocatable, dimension(:) :: avgLogL
 
   !-----------------------------------------------------------
@@ -92,6 +93,8 @@ program BayesianDeconvolution
   !call ExportRestoredSpectrum(theta_array(L_rep))
   !stop
 
+  call InitializeCounters()
+
   !-----------------------------------------------------------
   ! Set the replica exchange counter to zero.
   !-----------------------------------------------------------
@@ -101,18 +104,33 @@ program BayesianDeconvolution
   ! Main MCMC Loop with Replica Exchange.
   !-----------------------------------------------------------
   do t = 1, T_iter
-     if(mod(t,500)==0) then
-      print *,'iteration:',t
-     end if  
-     do l = 1, L_rep
+    if(mod(t,100)==0) then
+      do l=1,L_rep
+        accept_ratio = real(accepted_proposals(l))/real(total_proposals(l))*100
+      if(accept_ratio<20.0) then
+        c_proposal(l) = c_proposal(l)*0.9
+      else if(accept_ratio>50.0) then
+        c_proposal(l) = c_proposal(l)*1.1
+      end if
+      if(mod(t,500)==0) then
+        print *,'iteration:',t
+        print *,'Replica:',l
+        print '("accept ratio(%) = ",f6.2)',accept_ratio
+        !print '(i5,"/",i5)', accepted_proposals,total_proposals
+        print '("c_proposal(l) = ",f8.4)',c_proposal(l)
+      end if
+      call InitializeCounters()
+      end do
+    end if  
+    do l = 1, L_rep
         ! Update the parameters for replica l using blockwise MH updates.
-        call MCMC_UpdateReplica(theta_array(l), beta(l))
-        call MCMC_block_UpdateReplica(theta_array(l), beta(l))
+        call MCMC_UpdateReplica(theta_array(l), beta(l),l)
+        !call MCMC_block_UpdateReplica(theta_array(l), beta(l),l)
         ! Compute the current log-likelihood for replica l.
         currentLogL = ComputeLogLikelihood(theta_array(l))
         ! Update the likelihood accumulator for replica l.
         call UpdateLikelihoodAccumulator(l, currentLogL)
-     end do
+    end do
 
      ! Increment the exchange step counter.
     if(mod(t,50)==0) then

@@ -6,7 +6,7 @@
 module PriorProposal
   use, intrinsic :: iso_fortran_env
   use precision, only: fp_kind
-  use GlobalData, only: pi, K1, K2
+  use GlobalData, only: pi, K1, K2,L_rep_max
   implicit none
   
   ! Prior parameters for step function:
@@ -35,7 +35,7 @@ module PriorProposal
   real(fp_kind), parameter :: a_high_gamma_L = 1.0d-5, b_high_gamma_L = 1.0d2, sigma_high_gamma_L = 5.0d-1
   
   ! Proposal scaling factor.
-  real(fp_kind), parameter :: c_proposal = 1.0d-1
+  real(fp_kind),dimension(L_rep_max) :: c_proposal = 1.0d-2
 contains
 
   !----------------------------------------------------------
@@ -85,10 +85,11 @@ contains
   ! Function: GetProposalSigma
   ! Purpose: Given the prior sigma for a parameter, return the proposal sigma.
   !----------------------------------------------------------
-  real(fp_kind) function GetProposalSigma(sigma_prior)
+  real(fp_kind) function GetProposalSigma(sigma_prior,l)
     implicit none
+    integer(int32), intent(in) :: l
     real(fp_kind), intent(in) :: sigma_prior
-    GetProposalSigma = c_proposal * sigma_prior
+    GetProposalSigma = c_proposal(l) * sigma_prior
   end function GetProposalSigma
 
   !----------------------------------------------------------

@@ -13,8 +13,9 @@ module MCMC_Update
   use PriorProposal   ! Provides GetProposalSigma and GetPriorSigma
   use MultivariateProposal  ! New module for multivariate proposals.
   use SortPeaks
-
   implicit none
+  integer(int32), dimension(L_rep_max) :: total_proposals, accepted_proposals
+
 contains
 
   !----------------------------------------------------------
@@ -232,11 +233,12 @@ contains
   ! Output:
   !   proposed_block: newly proposed parameter values.
   !----------------------------------------------------------
-  subroutine ProposeNew(current_block, proposed_block, prior_sigma)
+  subroutine ProposeNew(current_block, proposed_block, prior_sigma,l)
     implicit none
     real(fp_kind), intent(in) :: current_block(:)
     real(fp_kind), intent(in) :: prior_sigma(:)
     real(fp_kind), intent(out), allocatable :: proposed_block(:)
+    integer(int32), intent(in) :: l
     integer(int32) :: i, block_size
     real(fp_kind) :: perturb, sigma_i
 
@@ -250,7 +252,7 @@ contains
     proposed_block = current_block
     do i = 1, block_size
        call NormalRandom(perturb)  ! Draw perturbation from N(0,1)
-       sigma_i = GetProposalSigma(prior_sigma(i))
+       sigma_i = GetProposalSigma(prior_sigma(i),l)
        proposed_block(i) = current_block(i) + sigma_i * perturb
     end do
   end subroutine ProposeNew
@@ -260,11 +262,12 @@ contains
   ! Purpose: Perform a Metropolis-Hastings update on a given block 
   !          using a multivariate normal proposal with covariance.
   !----------------------------------------------------------
-  subroutine BlockwiseMHUpdate(theta, block_id, beta_val)
+  subroutine BlockwiseMHUpdate(theta, block_id, beta_val,l)
     implicit none
     type(ModelParameters), intent(inout) :: theta
     integer(int32), intent(in) :: block_id
     real(fp_kind), intent(in) :: beta_val
+    integer(int32), intent(in) :: l
     real(fp_kind), allocatable :: current_block(:), proposed_block(:)
     real(fp_kind), allocatable :: prior_sigma(:)
     type(ModelParameters) :: theta_candidate
@@ -278,8 +281,8 @@ contains
     prior_sigma = GetPriorSigma(block_id)
     
     ! Generate a candidate update using a multivariate normal proposal.
-    !call ProposeNew(current_block, proposed_block, prior_sigma)
-    call ProposeNewMV(current_block, prior_sigma, proposed_block)
+    !call ProposeNew(current_block, proposed_block, prior_sigma,l)
+    call ProposeNewMV(current_block, prior_sigma, proposed_block,l)
 
     ! Create a candidate copy of theta.
     theta_candidate = theta
@@ -304,10 +307,11 @@ contains
   ! Purpose: Perform a Metropolis-Hastings update
   !          using a multivariate normal proposal with covariance.
   !----------------------------------------------------------
-  subroutine FullMHUpdate(theta, beta_val)
+  subroutine FullMHUpdate(theta, beta_val,l)
     implicit none
     type(ModelParameters), intent(inout) :: theta
     real(fp_kind), intent(in) :: beta_val
+    integer(int32), intent(in) :: l
     real(fp_kind), allocatable :: current_full(:), proposed_full(:)
     real(fp_kind), allocatable :: prior_sigma(:)
     type(ModelParameters) :: theta_candidate
@@ -320,8 +324,8 @@ contains
     prior_sigma = GetPriorSigmaFull()
     
     ! Generate a candidate update using a multivariate normal proposal.
-    !call ProposeNew(current_block, proposed_block, prior_sigma)
-    call ProposeNewMV(current_full, prior_sigma, proposed_full)
+    !call ProposeNew(current_block, proposed_block, prior_sigma,l)
+    call ProposeNewMV(current_full, prior_sigma, proposed_full,l)
 
     ! Create a candidate copy of theta.
     theta_candidate = theta
@@ -336,7 +340,10 @@ contains
     if (u < exp(delta)) then
        ! Accept the candidate update.
        call UpdateFull(theta, proposed_full)
+       accepted_proposals = accepted_proposals+1
     end if
+
+    total_proposals = total_proposals+1
 
     deallocate(current_full, proposed_full, prior_sigma)
   end subroutine FullMHUpdate
@@ -344,31 +351,34 @@ contains
   !----------------------------------------------------------
   ! Subroutine: MCMC_UpdateReplica full/blockwise
   !----------------------------------------------------------
-  subroutine MCMC_UpdateReplica(theta, beta_val)
+  subroutine MCMC_UpdateReplica(theta, beta_val,l)
     implicit none
     type(ModelParameters), intent(inout) :: theta
     real(fp_kind), intent(in) :: beta_val
-    !integer :: b, total_blocks
-    !total_blocks = TotalBlocks()
-    !do b = 1, total_blocks
-       !call BlockwiseMHUpdate(theta, b, beta_val)
-    !end do
-    call FullMHUpdate(theta, beta_val)
+    integer(int32), intent(in) :: l
+    call FullMHUpdate(theta, beta_val,l)
     !sort
     call BubbleSortPeaks(theta%low, .false.)
     call BubbleSortPeaks(theta%high, .true.)
   end subroutine MCMC_UpdateReplica
 
-  subroutine MCMC_block_UpdateReplica(theta, beta_val)
+  subroutine MCMC_block_UpdateReplica(theta, beta_val,l)
     implicit none
     type(ModelParameters), intent(inout) :: theta
     real(fp_kind), intent(in) :: beta_val
+    integer(int32), intent(in) :: l
     integer :: b, total_blocks
     total_blocks = TotalBlocks()
     do b = 1, total_blocks
-       call BlockwiseMHUpdate(theta, b, beta_val)
+       call BlockwiseMHUpdate(theta, b, beta_val,l)
     end do
   end subroutine MCMC_block_UpdateReplica
+
+  subroutine InitializeCounters()
+    total_proposals = 0
+    accepted_proposals = 0
+  end subroutine InitializeCounters
+
 
 
 end module MCMC_Update
