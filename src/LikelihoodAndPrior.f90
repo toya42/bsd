@@ -52,10 +52,11 @@ contains
 
     log_prior = 0.0d0
     ! Step function priors:
-    !log_prior = log_prior + GammaLogPDF (theta%step%Ba,    alpha_Ba,    beta_Ba)
-    log_prior = log_prior + GammaLogPDF(theta%step%Bb, alpha_Bb, beta_Bb)
+    log_prior = log_prior + NormalLogPDF(theta%step%Ba, mu_Ba, sigma_Ba)
+    log_prior = log_prior + NormalLogPDF(theta%step%Bb, mu_Bb, sigma_Bb)
+    !log_prior = log_prior + GammaLogPDF(theta%step%Bb, alpha_Bb, beta_Bb)
     log_prior = log_prior + GammaLogPDF(theta%step%H,  alpha_H,  beta_H)
-    log_prior = log_prior + NormalLogPDF(theta%step%E0, mu_E0, sigma_E0)
+    log_prior = log_prior + UniformLogPDF(theta%step%E0, a_E0, b_E0)
     log_prior = log_prior + UniformLogPDF(theta%step%Gamma, a_Gamma, b_Gamma)
 
     ! White-line priors:

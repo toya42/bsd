@@ -66,7 +66,7 @@ program BayesianDeconvolution
      theta_array(l)%step%Bb = 5.0d-8
      theta_array(l)%step%H  = 5.0d-6
      theta_array(l)%step%E0 = 2480.0d0
-     theta_array(l)%step%Gamma = 1.0d-2
+     theta_array(l)%step%Gamma = 1.0d-1
 
      theta_array(l)%WL%A_WL = 2.0d-5
      theta_array(l)%WL%mu_WL = 0.0d0

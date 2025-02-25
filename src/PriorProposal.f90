@@ -10,29 +10,29 @@ module PriorProposal
   implicit none
   
   ! Prior parameters for step function:
-  real(fp_kind), parameter :: mu_Ba = 0.0d0, sigma_Ba = 1.0d-10
-  real(fp_kind), parameter :: alpha_Bb = 10.0d0, beta_Bb = 5.0d-9, sigma_Bb = 1.0d-8
+  real(fp_kind), parameter :: mu_Ba = 0.0d0, sigma_Ba = 1.0d-12
+  real(fp_kind), parameter :: mu_Bb = 0.0d0, sigma_Bb = 1.0d-9
   real(fp_kind), parameter :: alpha_H  = 10.0d0, beta_H  = 5.0d-7, sigma_H  = 1.0d-6
-  real(fp_kind), parameter :: mu_E0 = 2480.0d0, sigma_E0 = 5.0d0
-  real(fp_kind), parameter :: a_Gamma = 1.0d-3, b_Gamma = 5.0d-2, sigma_Gamma = 2.0d-4
+  real(fp_kind), parameter :: a_E0 = 2400.0d0, b_E0 = 2560.0d0, sigma_E0 = 1.0d0
+  real(fp_kind), parameter :: a_Gamma = 1.0d-5, b_Gamma = 5.0d0, sigma_Gamma = 2.0d-2
   
   ! Prior parameters for white-line (WL) function:
-  real(fp_kind), parameter :: alpha_A_WL = 10.0d0, beta_A_WL = 2.0d-6, sigma_A_WL = 4.0d-6
-  real(fp_kind), parameter :: mu_mu_WL      = 0.0d0, sigma_mu_WL      = 2.0d0
-  real(fp_kind), parameter :: a_sigma_G_WL = 1.0d-5, b_sigma_G_WL = 1.0d2, sigma_sigma_G_WL = 1.0d-2
-  real(fp_kind), parameter :: a_gamma_L_WL = 1.0d-5, b_gamma_L_WL = 1.0d2, sigma_gamma_L_WL = 1.0d-2
+  real(fp_kind), parameter :: alpha_A_WL = 10.0d0, beta_A_WL = 2.0d-6, sigma_A_WL = 4.0d-5
+  real(fp_kind), parameter :: mu_mu_WL      = 0.0d0, sigma_mu_WL      = 1.0d0
+  real(fp_kind), parameter :: a_sigma_G_WL = 1.0d-5, b_sigma_G_WL = 1.0d2, sigma_sigma_G_WL = 5.0d-1
+  real(fp_kind), parameter :: a_gamma_L_WL = 1.0d-5, b_gamma_L_WL = 1.0d2, sigma_gamma_L_WL = 5.0d-1
   
   ! Prior parameters for each low-energy peak:
-  real(fp_kind), parameter :: alpha_low_A = 20.0d0, beta_low_A = 1.0d-7, sigma_low_A = 2.0d-7
-  real(fp_kind), parameter :: a_low_mu      = 0.0d0, b_low_mu = 30.0d0, sigma_low_mu      = 2.0d0
-  real(fp_kind), parameter :: a_low_sigma_G = 1.0d-5, b_low_sigma_G = 1.0d2, sigma_low_sigma_G = 1.0d-2
-  real(fp_kind), parameter :: a_low_gamma_L = 1.0d-5, b_low_gamma_L = 1.0d2, sigma_low_gamma_L = 1.0d-2
+  real(fp_kind), parameter :: alpha_low_A = 20.0d0, beta_low_A = 5.0d-7, sigma_low_A = 2.0d-6
+  real(fp_kind), parameter :: a_low_mu      = 0.0d0, b_low_mu = 30.0d0, sigma_low_mu      = 5.0d0
+  real(fp_kind), parameter :: a_low_sigma_G = 1.0d-5, b_low_sigma_G = 1.0d2, sigma_low_sigma_G = 5.0d-1
+  real(fp_kind), parameter :: a_low_gamma_L = 1.0d-5, b_low_gamma_L = 1.0d2, sigma_low_gamma_L = 5.0d-1
   
   ! Prior parameters for each high-energy peak:
-  real(fp_kind), parameter :: alpha_high_A = 10.0d0, beta_high_A = 1.0d-7, sigma_high_A = 1.0d-7
-  real(fp_kind), parameter :: a_high_mu      = 0.0d0, b_high_mu = 200.0d0, sigma_high_mu      = 2.0d0
-  real(fp_kind), parameter :: a_high_sigma_G = 1.0d-5, b_high_sigma_G = 1.0d2, sigma_high_sigma_G = 1.0d-2
-  real(fp_kind), parameter :: a_high_gamma_L = 1.0d-5, b_high_gamma_L = 1.0d2, sigma_high_gamma_L = 1.0d-2
+  real(fp_kind), parameter :: alpha_high_A = 10.0d0, beta_high_A = 5.0d-7, sigma_high_A = 2.0d-6
+  real(fp_kind), parameter :: a_high_mu      = 0.0d0, b_high_mu = 200.0d0, sigma_high_mu      = 1.0d1
+  real(fp_kind), parameter :: a_high_sigma_G = 1.0d-5, b_high_sigma_G = 1.0d2, sigma_high_sigma_G = 5.0d-1
+  real(fp_kind), parameter :: a_high_gamma_L = 1.0d-5, b_high_gamma_L = 1.0d2, sigma_high_gamma_L = 5.0d-1
   
   ! Proposal scaling factor.
   real(fp_kind), parameter :: c_proposal = 1.0d-1

@@ -12,6 +12,7 @@ module MCMC_Update
   use RNG
   use PriorProposal   ! Provides GetProposalSigma and GetPriorSigma
   use MultivariateProposal  ! New module for multivariate proposals.
+  use SortPeaks
 
   implicit none
 contains
@@ -353,6 +354,9 @@ contains
        !call BlockwiseMHUpdate(theta, b, beta_val)
     !end do
     call FullMHUpdate(theta, beta_val)
+    !sort
+    call BubbleSortPeaks(theta%low, .false.)
+    call BubbleSortPeaks(theta%high, .true.)
   end subroutine MCMC_UpdateReplica
 
   subroutine MCMC_block_UpdateReplica(theta, beta_val)

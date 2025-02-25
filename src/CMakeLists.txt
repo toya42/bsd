@@ -39,5 +39,6 @@ add_executable(${EXECUTABLE}
   ReplicaExchange.f90
   PosteriorStatistics.f90
   ThermodynamicIntegration.f90
+  SortPeaks.f90
   main.f90
   )

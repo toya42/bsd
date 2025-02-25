@@ -163,8 +163,8 @@ contains
     ! Scale the argument by 2*Gamma as specified.
     x = (E - theta_step%E0) / (0.5 * theta_step%Gamma)
     !f_step = theta_step%Ba * (E - theta_step%E0) + theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
-    !f_step = theta_step%Ba * E + theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
-    f_step = theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
+    f_step = theta_step%Ba * E + theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
+    !f_step = theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
   end function f_step
 
   !---------------------------------------------------------------------

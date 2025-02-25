@@ -39,5 +39,5 @@ build
 
 # log file
 run/fort.*
-run/log
+run/log*
 run/spec*
