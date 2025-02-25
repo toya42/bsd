@@ -185,7 +185,7 @@ contains
        fr = f_ratio(E(i), theta_est)
        restored_val = fr*I_inc(i)
        !print *,E(i),restored_val
-       write(spectrum_unit, *) E(i), I_inc(i), I_ab(i), fr, restored_val,step,wl,low,high
+       write(spectrum_unit, *) E(i), I_inc(i), I_ab(i), fr, restored_val,step,wl,low,high, step+wl
     end do
 
    e0 = theta_est%step%E0
