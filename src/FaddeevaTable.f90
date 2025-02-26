@@ -131,26 +131,66 @@ contains
   ! Purpose: Return the complex error function w(z) for given x and y
   ! using the precomputed table via nearest-neighbor lookup.
   !---------------------------------------------------------------------
-  function FastFaddeeva(x, y) result(w)
-    implicit none
-    double precision, intent(in) :: x, y
-    complex(8) :: w
-    integer :: i, j, index
-    ! Ensure x and y are nonnegative for the table (our grid is for x>=0, y>=0)
-    if (x < 0.d0 .or. y < 0.d0) then
-       print *, "FastFaddeeva: x and y must be nonnegative for table lookup."
-       stop
-    end if
-    ! Determine the grid indices. Here we use nearest-neighbor.
-    i = int(x/h + 0.5d0)
-    j = int(y/h + 0.5d0)
-    if (i < 0) i = 0
-    if (i > nx+1) i = nx+1
-    if (j < 0) j = 0
-    if (j > ny+1) j = ny+1
-    ! For Fortran arrays (1-indexed), compute the index.
-    index = i + j*(nx+2) + 1
-    w = cmplx(wtreal(index), wtimag(index))
-  end function FastFaddeeva
+function FastFaddeeva(x, y) result(w)
+  implicit none
+  double precision, intent(in) :: x, y
+  complex(8) :: w, w_table
+  integer :: i, j, index
+  double precision :: xx, yy
+
+  !-------------------------------------------
+  ! Step 1: Handle negative y.
+  ! If y < 0, we set yy = -y and later take the conjugate.
+  !-------------------------------------------
+  if (y < 0.d0) then
+     yy = -y
+  else
+     yy = y
+  end if
+
+  !-------------------------------------------
+  ! Step 2: Handle negative x.
+  ! If x < 0, set xx = -x (which is nonnegative) for table lookup.
+  !-------------------------------------------
+  if (x < 0.d0) then
+     xx = -x
+  else
+     xx = x
+  end if
+
+  !-------------------------------------------
+  ! Step 3: Table lookup.
+  ! Both xx and yy are nonnegative now.
+  ! Determine grid indices (using nearest-neighbor lookup).
+  !-------------------------------------------
+  i = int(xx/h + 0.5d0)
+  j = int(yy/h + 0.5d0)
+  if (i < 0) i = 0
+  if (i > nx+1) i = nx+1
+  if (j < 0) j = 0
+  if (j > ny+1) j = ny+1
+  index = i + j*(nx+2) + 1
+  w_table = cmplx(wtreal(index), wtimag(index))
+
+  !-------------------------------------------
+  ! Step 4: If original x was negative, adjust using symmetry.
+  ! For x < 0, we have:
+  !    w(x+iy) = 2 exp(-(x+iy)^2) - w(-x+iy)
+  ! where w(-x+iy) is obtained by table lookup (using xx = -x).
+  !-------------------------------------------
+  if (x < 0.d0) then
+     w = 2.d0 * exp(- (cmplx(x, y))**2) - w_table
+  else
+     w = w_table
+  end if
+
+  !-------------------------------------------
+  ! Step 5: If original y was negative, take complex conjugate.
+  !-------------------------------------------
+  if (y < 0.d0) then
+     w = conjg(w)
+  end if
+
+end function FastFaddeeva
 
 end module FaddeevaTable
