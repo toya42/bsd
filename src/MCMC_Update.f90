@@ -14,7 +14,7 @@ module MCMC_Update
   use MultivariateProposal  ! New module for multivariate proposals.
   use SortPeaks
   implicit none
-  integer(int32), dimension(L_rep_max) :: total_proposals, accepted_proposals
+  integer(int32), allocatable, dimension(:,:) :: total_proposals, accepted_proposals
 
 contains
 
@@ -233,12 +233,12 @@ contains
   ! Output:
   !   proposed_block: newly proposed parameter values.
   !----------------------------------------------------------
-  subroutine ProposeNew(current_block, proposed_block, prior_sigma,l)
+  subroutine ProposeNew(current_block, proposed_block, prior_sigma,b,l)
     implicit none
     real(fp_kind), intent(in) :: current_block(:)
     real(fp_kind), intent(in) :: prior_sigma(:)
     real(fp_kind), intent(out), allocatable :: proposed_block(:)
-    integer(int32), intent(in) :: l
+    integer(int32), intent(in) :: b,l
     integer(int32) :: i, block_size
     real(fp_kind) :: perturb, sigma_i
 
@@ -252,10 +252,30 @@ contains
     proposed_block = current_block
     do i = 1, block_size
        call NormalRandom(perturb)  ! Draw perturbation from N(0,1)
-       sigma_i = GetProposalSigma(prior_sigma(i),l)
+       sigma_i = GetProposalSigma(prior_sigma(i),b,l)
        proposed_block(i) = current_block(i) + sigma_i * perturb
     end do
   end subroutine ProposeNew
+
+  subroutine ProposeNewFull(current, proposed, prior_sigma,l)
+    implicit none
+    real(fp_kind), intent(in) :: current(:)
+    real(fp_kind), intent(in) :: prior_sigma(:)
+    real(fp_kind), intent(out), allocatable :: proposed(:)
+    integer(int32), intent(in) :: l
+    integer(int32) :: i, block_size
+    real(fp_kind) :: perturb, sigma_i
+
+    block_size = size(current)
+    allocate(proposed(block_size))
+    proposed = current
+    do i = 1, block_size
+       call NormalRandom(perturb)  ! Draw perturbation from N(0,1)
+       sigma_i = GetProposalSigma(prior_sigma(i),1,l)
+       proposed(i) = current(i) + sigma_i * perturb
+    end do
+  end subroutine ProposeNewFull
+
 
   !----------------------------------------------------------
   ! Subroutine: BlockwiseMHUpdate
@@ -281,8 +301,8 @@ contains
     prior_sigma = GetPriorSigma(block_id)
     
     ! Generate a candidate update using a multivariate normal proposal.
-    !call ProposeNew(current_block, proposed_block, prior_sigma,l)
-    call ProposeNewMV(current_block, prior_sigma, proposed_block,l)
+    call ProposeNew(current_block, proposed_block, prior_sigma,block_id,l)
+    !call ProposeNewMV(current_block, prior_sigma, proposed_block,block_id,l)
 
     ! Create a candidate copy of theta.
     theta_candidate = theta
@@ -294,10 +314,18 @@ contains
     delta = logPost_proposed - logPost_current
 
     call RandomUniform(u)
-    if (u < exp(delta)) then
-       ! Accept the candidate update.
-       call UpdateBlock(theta, block_id, proposed_block)
+
+    if (0<delta) then
+      call UpdateBlock(theta, block_id, proposed_block)
+      accepted_proposals(block_id,l) = accepted_proposals(block_id,l)+1
+    else if(delta<-1000) then
+      continue
+    else if (u < exp(delta)) then
+      ! Accept the candidate update.
+      call UpdateBlock(theta, block_id, proposed_block)
+      accepted_proposals(block_id,l) = accepted_proposals(block_id,l)+1
     end if
+    total_proposals(block_id,l) = total_proposals(block_id,l)+1
 
     deallocate(current_block, proposed_block, prior_sigma)
   end subroutine BlockwiseMHUpdate
@@ -325,7 +353,8 @@ contains
     
     ! Generate a candidate update using a multivariate normal proposal.
     !call ProposeNew(current_block, proposed_block, prior_sigma,l)
-    call ProposeNewMV(current_full, prior_sigma, proposed_full,l)
+    call ProposeNewFull(current_full, proposed_full, prior_sigma,l)
+    !call ProposeNewMV(current_full, prior_sigma, proposed_full,l)
 
     ! Create a candidate copy of theta.
     theta_candidate = theta
@@ -337,13 +366,18 @@ contains
     delta = logPost_proposed - logPost_current
 
     call RandomUniform(u)
-    if (u < exp(delta)) then
+    if (0<delta) then
+      call UpdateFull(theta, proposed_full)
+      accepted_proposals(1,l) = accepted_proposals(1,l)+1
+    else if(delta<-1000) then
+      continue
+    else if (u < exp(delta)) then
        ! Accept the candidate update.
-       call UpdateFull(theta, proposed_full)
-       accepted_proposals(l) = accepted_proposals(l)+1
+      call UpdateFull(theta, proposed_full)
+      accepted_proposals(1,l) = accepted_proposals(1,l)+1
     end if
 
-    total_proposals(l) = total_proposals(l)+1
+    total_proposals(1,l) = total_proposals(1,l)+1
 
     deallocate(current_full, proposed_full, prior_sigma)
   end subroutine FullMHUpdate
@@ -369,12 +403,28 @@ contains
     integer(int32), intent(in) :: l
     integer :: b, total_blocks
     total_blocks = TotalBlocks()
+
+    !print *,'MCMC_block_UpdateReplica'
     do b = 1, total_blocks
        call BlockwiseMHUpdate(theta, b, beta_val,l)
     end do
+    !sort
+    call BubbleSortPeaks(theta%low, .false.)
+    call BubbleSortPeaks(theta%high, .true.)
+
   end subroutine MCMC_block_UpdateReplica
 
-  subroutine InitializeCounters()
+  subroutine InitializeCounters(switch)
+    implicit none
+    integer(int32),intent(in) :: switch
+    integer(int32) :: bs,ls
+
+    if(switch==0) then
+      bs = TotalBlocks()
+      ls = L_rep
+      allocate(total_proposals(bs,ls))
+      allocate(accepted_proposals(bs,ls))
+    end if
     total_proposals = 0
     accepted_proposals = 0
   end subroutine InitializeCounters

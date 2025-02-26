@@ -142,6 +142,7 @@ contains
     xx = x / scale
     yy = gamma / scale
     ! Compute Faddeeva function w(z).
+    !print *,xx,yy
     w_val = Faddeeva(xx, yy)
     ! Voigt profile is the real part divided by (sigma * sqrt(2*pi)).
     Voigt = real(w_val) / ( sigma * sqrt(2.0d0 * pi) )
@@ -162,8 +163,8 @@ contains
     real(fp_kind) :: x
     ! Scale the argument by 2*Gamma as specified.
     x = (E - theta_step%E0) / (0.5 * theta_step%Gamma)
-    !f_step = theta_step%Ba * (E - theta_step%E0) + theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
-    f_step = theta_step%Ba * E + theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
+    f_step = theta_step%Ba * (E - theta_step%E0) + theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
+    !f_step = theta_step%Ba * E + theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
     !f_step = theta_step%Bb + theta_step%H * (0.5d0 + (1.0d0/pi)*atan(x))
   end function f_step
 

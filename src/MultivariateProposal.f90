@@ -75,17 +75,17 @@ contains
   !          using the prior sigma vector. (This can be replaced by a full
   !          covariance if available.)
   !------------------------------------------------------------------
-  function GetProposalCovariance(prior_sigma,l) result(Sigma)
+  function GetProposalCovariance(prior_sigma,b,l) result(Sigma)
     implicit none
     real(fp_kind), intent(in) :: prior_sigma(:)
-    integer(int32), intent(in) :: l
+    integer(int32), intent(in) :: b,l
     real(fp_kind), allocatable :: Sigma(:,:)
     integer :: n, i
     n = size(prior_sigma)
     allocate(Sigma(n,n))
     Sigma = 0.0d0
     do i = 1, n
-       Sigma(i,i) = GetProposalSigma(prior_sigma(i),l)**2
+       Sigma(i,i) = GetProposalSigma(prior_sigma(i),b,l)**2
     end do
   end function GetProposalCovariance
 
@@ -101,11 +101,11 @@ contains
   ! Output:
   !   proposed_block: newly proposed parameter vector.
   !------------------------------------------------------------------
-  subroutine ProposeNewMV(current_block, prior_sigma, proposed_block,l)
+  subroutine ProposeNewMV(current_block, prior_sigma, proposed_block,b,l)
     implicit none
     real(fp_kind), intent(in) :: current_block(:)
     real(fp_kind), intent(in) :: prior_sigma(:)
-    integer(int32), intent(in) :: l
+    integer(int32), intent(in) :: b,l
     real(fp_kind), intent(out), allocatable :: proposed_block(:)
     real(fp_kind), allocatable :: Sigma(:,:), z(:)
     integer :: block_size
@@ -117,7 +117,7 @@ contains
     end if
 
     ! Build the proposal covariance matrix.
-    Sigma = GetProposalCovariance(prior_sigma,l)
+    Sigma = GetProposalCovariance(prior_sigma,b,l)
     call MultivariateNormalSample(Sigma, z)
     allocate(proposed_block(block_size))
     proposed_block = current_block + z
