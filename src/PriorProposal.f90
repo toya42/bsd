@@ -18,7 +18,7 @@ module PriorProposal
   
   ! Prior parameters for white-line (WL) function:
   real(fp_kind), parameter :: alpha_A_WL = 10.0d0, beta_A_WL = 5.0d-7, sigma_A_WL = 1.0d-5
-  real(fp_kind), parameter :: mu_mu_WL = 0.0d0, sigma_mu_WL = 4.0d0
+  real(fp_kind), parameter :: mu_mu_WL = 0.0d0, sigma_mu_WL = 2.0d0
   !real(fp_kind), parameter :: a_mu_WL = -20.0d0, b_mu_WL = 20.0d0, sigma_mu_WL      = 5.0d0
   real(fp_kind), parameter :: a_sigma_G_WL = 1.0d-5, b_sigma_G_WL = 1.0d2, sigma_sigma_G_WL = 1.0d-0
   real(fp_kind), parameter :: a_gamma_L_WL = 1.0d-5, b_gamma_L_WL = 1.0d2, sigma_gamma_L_WL = 5.0d-1
