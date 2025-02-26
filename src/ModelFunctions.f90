@@ -7,6 +7,7 @@ module ModelFunctions
   use, intrinsic :: iso_fortran_env, only: real64, int32
   use precision, only: fp_kind
   use GlobalData
+  use FaddeevaTable
   implicit none
 
   ! Derived type for the step (edge) function parameters.
@@ -44,86 +45,6 @@ module ModelFunctions
 contains
 
   !---------------------------------------------------------------------
-  ! Function: Faddeeva
-  ! Purpose: Compute the Faddeeva function w(z) = exp(-z^2)*erfc(-i*z)
-  !          for z = xx + i*yy using a continued-fraction approximation.
-  !          This routine is based on the Cernlib code provided.
-  ! Inputs:
-  !   xx, yy - real components of the complex argument z.
-  ! Output:
-  !   Returns a complex number w = wx + i*wy.
-  !---------------------------------------------------------------------
-  function Faddeeva(xx, yy) result(w)
-    implicit none
-    real(fp_kind), intent(in) :: xx, yy
-    complex(fp_kind) :: w
-    real(fp_kind) :: wx, wy
-    integer :: n, nc, nu
-    real(fp_kind) :: x, y, q, h, xl, xh, yh, tx, ty, tn, sx, sy, saux
-    real(fp_kind), parameter :: cc = 1.12837916709551d0
-    real(fp_kind), parameter :: xlim = 5.33d0, ylim = 4.29d0
-    real(fp_kind), parameter :: fac1 = 3.2d0, fac2 = 23.0d0, fac3 = 21.0d0
-    real(fp_kind), dimension(34) :: rx, ry
-
-    x = abs(xx)
-    y = abs(yy)
-
-    if ( (y < ylim) .and. (x < xlim) ) then
-       q  = (1.0d0 - y / ylim) * sqrt(1.0d0 - (x/xlim)**2)
-       h  = 1.0d0 / (fac1 * q)
-       nc = 7 + int(fac2 * q)
-       xl = h**(1 - nc)
-       xh = y + 0.5d0/h
-       yh = x
-       nu = 10 + int(fac3 * q)
-       rx(nu+1) = 0.0d0
-       ry(nu+1) = 0.0d0
-       do n = nu, 1, -1
-          tx = xh + n * rx(n+1)
-          ty = yh - n * ry(n+1)
-          tn = tx*tx + ty*ty
-          rx(n) = 0.5d0 * tx / tn
-          ry(n) = 0.5d0 * ty / tn
-       end do
-
-       sx = 0.0d0
-       sy = 0.0d0
-       do n = nc, 1, -1
-          saux = sx + xl
-          sx = rx(n) * saux - ry(n) * sy
-          sy = rx(n) * sy + ry(n) * saux
-          xl = h * xl
-       end do
-       wx = cc * sx
-       wy = cc * sy
-    else
-       xh = y
-       yh = x
-       rx(1) = 0.0d0
-       ry(1) = 0.0d0
-       do n = 9, 1, -1
-          tx = xh + n * rx(1)
-          ty = yh - n * ry(1)
-          tn = tx*tx + ty*ty
-          rx(1) = 0.5d0 * tx / tn
-          ry(1) = 0.5d0 * ty / tn
-       end do
-       wx = cc * rx(1)
-       wy = cc * ry(1)
-    end if
-
-    if (yy < 0.0d0) then
-       wx = 2.0d0 * exp(yy*yy - xx*xx) * cos(2.0d0*xx*yy) - wx
-       wy = -2.0d0 * exp(yy*yy - xx*xx) * sin(2.0d0*xx*yy) - wy
-       if (xx > 0.0d0) wy = -wy
-    else
-       if (xx < 0.0d0) wy = -wy
-    end if
-
-    w = cmplx(wx, wy, kind=fp_kind)
-  end function Faddeeva
-
-  !---------------------------------------------------------------------
   ! Function: Voigt
   ! Purpose: Compute the Voigt profile V(x; sigma, gamma)
   !          using the Faddeeva function.
@@ -143,7 +64,8 @@ contains
     yy = gamma / scale
     ! Compute Faddeeva function w(z).
     !print *,xx,yy
-    w_val = Faddeeva(xx, yy)
+    !w_val = Faddeeva(xx, yy)
+    w_val = FastFaddeeva(xx, yy)
     ! Voigt profile is the real part divided by (sigma * sqrt(2*pi)).
     Voigt = real(w_val) / ( sigma * sqrt(2.0d0 * pi) )
     !if(Voigt<0.0) then

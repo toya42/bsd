@@ -17,6 +17,7 @@ program BayesianDeconvolution
   use PosteriorStatistics
   use RNG
   use PriorProposal, only : c_proposal
+  use FaddeevaTable
   implicit none
 
   integer(int32) :: t, l, exchange_step, i, b
@@ -44,7 +45,7 @@ program BayesianDeconvolution
 
 
   call InitializeHistoryOutput("log.txt")
-
+  call InitializeFaddeevaTable
   !-----------------------------------------------------------
   ! Initialize Beta (Inverse Temperatures) for Replicas
   ! In practice, beta might be read from a parameter file.

@@ -6,7 +6,7 @@ project(bayesian-spectral-deconvolution Fortran)
 
 set(EXECUTABLE mcmc.exe)
 
-if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
+if(CMAKE_Fortran_COMPILER_ID MATCHES IntelLLVM)
    set(CMAKE_Fortran_FLAGS_DEBUG   "-O0                -warn all -standf08     \
                                     -warn declarations -CB       -check uninit \
                                     -check all         -fpe0     -traceback    \
@@ -29,6 +29,7 @@ add_executable(${EXECUTABLE}
   GlobalData.f90
   DataInput.f90
   DataOutput.f90
+  FaddeevaTable.f90
   ModelFunctions.f90
   LikelihoodAndPrior.f90
   PriorProposal.f90
