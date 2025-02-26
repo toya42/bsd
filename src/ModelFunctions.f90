@@ -57,6 +57,12 @@ contains
     real(fp_kind) :: scale
     real(fp_kind) :: xx, yy
     complex(fp_kind) :: w_val
+
+    !if(sigma<0.0d0 .or. gamma<0.0d0) then
+    !  print *,'sigma',sigma
+    !  print *,'gamma',gamma
+    !end if
+
     ! Compute scaling factor: sigma * sqrt(2)
     scale = sigma * sqrt(2.0d0)
     ! Compute real and imaginary parts of z.
@@ -65,7 +71,7 @@ contains
     ! Compute Faddeeva function w(z).
     !print *,xx,yy
     !w_val = Faddeeva(xx, yy)
-    w_val = FastFaddeeva(xx, yy)
+    w_val = FastFaddeeva(abs(xx), yy)
     ! Voigt profile is the real part divided by (sigma * sqrt(2*pi)).
     Voigt = real(w_val) / ( sigma * sqrt(2.0d0 * pi) )
     !if(Voigt<0.0) then
