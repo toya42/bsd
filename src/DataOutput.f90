@@ -10,7 +10,7 @@ module DataOutput
   use ModelFunctions
   implicit none
 
-  integer(int32), parameter :: BUFFER_SIZE = 100
+  integer(int32), parameter :: BUFFER_SIZE = 1000
   integer(int32) :: history_length
   ! Explanation:
   ! 1: iteration number

@@ -90,16 +90,16 @@ contains
        print *, "Error reading history file: ", trim(filename)
        stop
     end if
-    n_columns = 0
+    n_columns = 1+5+4+4*K1+4*K2
     do
        read(unit, '(A)', iostat=ios) line
        if (ios /= 0) exit
        n_history = n_history + 1
-       if (n_history == 0) then
-          call Tokenize(line, tokens, num_fields)
-          n_columns = num_fields
-          deallocate(tokens)
-       end if
+       !if (n_history == 0) then
+       !   call Tokenize(line, tokens, num_fields)
+       !   n_columns = num_fields
+       !   deallocate(tokens)
+       !end if
     end do
     close(unit)
 
@@ -117,7 +117,7 @@ contains
           cycle
        end if
 
-       read(unit,fmt2) temp_row
+       read(unit,fmt2) temp_row(:)
        !print *,"temp_row",temp_row
 
        !if (ios /= 0) exit
@@ -127,7 +127,7 @@ contains
     close(unit)
     deallocate(temp_row)
 
-    !print *,history_data
+    !print *,'history_data',history_data
   end subroutine ReadHistoryFile
 
   !----------------------------------------------------------

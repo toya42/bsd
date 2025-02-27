@@ -117,7 +117,7 @@ program BayesianDeconvolution
     !  print *,theta_array(l)%high(i)%gamma_L
     !end do;end do;end do
 
-    if(mod(t,500)==0 .and. t<=T_burn/2) then
+    if(mod(t,200)==0 .and. t<=T_burn/2) then
       do l=1,L_rep
         do b=1,(2+K1+K2)
           accept_ratio = real(accepted_proposals(b,l))/real(total_proposals(b,l))*100
