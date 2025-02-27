@@ -56,7 +56,10 @@ program BayesianDeconvolution
   !beta(3) = 0.7d0
   !beta(4) = 1.0d0
   do l=1,L_rep
-    beta(l) = 1.2**(l-L_rep)
+    !beta(l) = 1.2**(l-L_rep)
+    !beta(l) = log(l+0.1d0)/log(L_rep+0.1)
+    !beta(l) = real(l)/real(L_rep)
+    beta(l) = (real(l)/real(L_rep)+1.2d0**(l-L_rep))*0.5d0
     idx_exchange(l) = l
     !print *,beta(l)
   end do
