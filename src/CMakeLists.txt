@@ -11,7 +11,7 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES IntelLLVM)
                                     -warn declarations -CB       -check uninit \
                                     -check all         -fpe0     -traceback    \
                                     -g                 -fpp      -Ddebug -lpthread -ldl")
-   set(CMAKE_Fortran_FLAGS_PROFILE "-O3 -fpp -march=native -mtune=native -p -lpthread -ldl")
+   set(CMAKE_Fortran_FLAGS_PROFILE "-O3 -g -ipo -static -xHost")
    set(CMAKE_Fortran_FLAGS_FAST    "-O3 -fpp -march=native -mtune=native  -lpthread -ldl ")
 endif()
 

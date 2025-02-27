@@ -155,4 +155,29 @@ contains
     w = cmplx(wtreal(index), wtimag(index))
   end function FastFaddeeva
 
+  function FastFaddeevaReal(x, y) result(r)
+    implicit none
+    double precision, intent(in) :: x, y
+    double precision :: r
+    integer :: i, j, index
+    ! Ensure x and y are nonnegative for the table (our grid is for x>=0, y>=0)
+    !if (x < 0.d0 .or. y < 0.d0) then
+    !   print *, "FastFaddeeva: x and y must be nonnegative for table lookup."
+    !   print *,'x',x
+    !   print *,'y',y
+    !   stop
+    !end if
+    ! Determine the grid indices. Here we use nearest-neighbor.
+    i = int(x/h + 0.5d0)
+    j = int(y/h + 0.5d0)
+    if (i < 0) i = 0
+    if (i > nx+1) i = nx+1
+    if (j < 0) j = 0
+    if (j > ny+1) j = ny+1
+    ! For Fortran arrays (1-indexed), compute the index.
+    index = i + j*(nx+2) + 1
+    r = wtreal(index)
+  end function FastFaddeevaReal
+
+
 end module FaddeevaTable

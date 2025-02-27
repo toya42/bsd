@@ -55,8 +55,8 @@ contains
     implicit none
     real(fp_kind), intent(in) :: x, sigma, gamma
     real(fp_kind) :: scale
-    real(fp_kind) :: xx, yy
-    complex(fp_kind) :: w_val
+    real(fp_kind) :: xx, yy, w_real
+    !complex(fp_kind) :: w_val
 
     !if(sigma<0.0d0 .or. gamma<0.0d0) then
     !  print *,'sigma',sigma
@@ -71,9 +71,12 @@ contains
     ! Compute Faddeeva function w(z).
     !print *,xx,yy
     !w_val = Faddeeva(xx, yy)
-    w_val = FastFaddeeva(abs(xx), yy)
+    !w_val = FastFaddeeva(abs(xx), yy)
+    w_real = FastFaddeevaReal(abs(xx), yy)
     ! Voigt profile is the real part divided by (sigma * sqrt(2*pi)).
-    Voigt = real(w_val) / ( sigma * sqrt(2.0d0 * pi) )
+    !Voigt = real(w_val) / ( sigma * sqrt(2.0d0 * pi) )
+    Voigt = w_real / ( sigma * sqrt(2.0d0 * pi) )
+
     !if(Voigt<0.0) then
     !    print *,"Voigt=",Voigt
     !end if

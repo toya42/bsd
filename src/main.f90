@@ -55,7 +55,7 @@ program BayesianDeconvolution
   !beta(3) = 0.7d0
   !beta(4) = 1.0d0
   do l=2,L_rep
-    beta(l) = 1.225**(l-L_rep)
+    beta(l) = 1.15**(l-L_rep)
     !print *,beta(l)
    end do
   beta(1) = beta(2)*0.5

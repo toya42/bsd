@@ -1,5 +1,5 @@
-20000   T_iter
-10000   T_burn
+50000   T_iter
+20000   T_burn
    50   L_rep
     8   K1
     8   K2
