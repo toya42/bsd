@@ -11,6 +11,7 @@ module ReplicaExchange
   use GlobalData            ! Contains beta array and other global parameters.
   use RNG                   ! Provides RandomUniform subroutine.
   implicit none
+  integer(int32),dimension(L_rep_max) :: cnt_exchange
 contains
 
   !----------------------------------------------------------
@@ -62,6 +63,7 @@ contains
           if (0<delta_swap) then
             call SwapModelParameters(theta_array(l), theta_array(l+1))
             !print *,"exchange",l,"<->",l+1
+            cnt_exchange(l) = cnt_exchange(l)+1
           else if(delta_swap<-1000) then
             continue
           else 
@@ -70,6 +72,7 @@ contains
             if (u < min(1.0d0, r_swap)) then
               call SwapModelParameters(theta_array(l), theta_array(l+1))
               !print *,"exchange",l,"<->",l+1
+              cnt_exchange(l) = cnt_exchange(l)+1
             end if
           end if
        end do
@@ -82,6 +85,7 @@ contains
           if (0<delta_swap) then
              call SwapModelParameters(theta_array(l), theta_array(l+1))
              !print *,"exchange",l,"<->",l+1
+            cnt_exchange(l) = cnt_exchange(l)+1
           else if(delta_swap<-1000) then
             continue
           else
@@ -90,6 +94,7 @@ contains
             if (u < min(1.0d0, r_swap)) then
               call SwapModelParameters(theta_array(l), theta_array(l+1))
               !print *,"exchange",l,"<->",l+1
+            cnt_exchange(l) = cnt_exchange(l)+1
             end if
           end if
        end do

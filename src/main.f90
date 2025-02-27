@@ -20,11 +20,12 @@ program BayesianDeconvolution
   use FaddeevaTable
   implicit none
 
-  integer(int32) :: t, l, exchange_step, i, b
+  integer(int32) :: t, l, exchange_step, i, b, exchange_unit
   type(ModelParameters), allocatable, dimension(:) :: theta_array
   type(ModelParameters) :: theta_mode
   real(fp_kind) :: currentLogL,accept_ratio
   real(fp_kind), allocatable, dimension(:) :: avgLogL
+  character(len=20) :: fmt_exchange
 
   !-----------------------------------------------------------
   ! Read experimental data from CSV file.
@@ -97,6 +98,14 @@ program BayesianDeconvolution
   call InitializeCounters(0)
   allocate(c_proposal((2+K1+K2),L_rep))
   c_proposal = 0.5d-2
+  cnt_exchange = 0.0d0
+  write(fmt_exchange,'(I0)') L_rep
+  fmt_exchange = '(i8,'//trim(fmt_exchange)//'(f8.2))'
+  !print *,fmt_exchange
+  exchange_unit=19
+  open(exchange_unit,file="exchange.txt",status='replace', action='write', form='formatted')
+
+
   !-----------------------------------------------------------
   ! Set the replica exchange counter to zero.
   !-----------------------------------------------------------
@@ -158,12 +167,21 @@ program BayesianDeconvolution
         call OddEvenExchange(theta_array, beta, exchange_step)
     end if
 
-     if(t > T_burn) then 
-          call AppendHistoryEntry(t, theta_array(L_rep))
-     end if
+    if(t > T_burn) then 
+      call AppendHistoryEntry(t, theta_array(L_rep))
+    end if
      !call AppendHistoryEntry(t, theta_array(L_rep))
+    
+    if(mod(t,5000)==0) then
+      write(exchange_unit,fmt_exchange) t,real(cnt_exchange(1:L_rep))/real(50)*1.0d2
+      !print *, 'exchange output'
+      !print fmt_exchange,t, real(cnt_exchange(1:L_rep))/real(50)*1.0d2
+      cnt_exchange = 0
+    end if
+
   end do
 
+  close(201)
   call FinalizeHistoryOutput()
 
   !-----------------------------------------------------------
