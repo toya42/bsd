@@ -41,4 +41,6 @@ build
 run/fort.*
 run/log*
 run/spec*
+run/exchange.txt
+run/index.txt
 run?

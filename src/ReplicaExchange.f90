@@ -11,7 +11,7 @@ module ReplicaExchange
   use GlobalData            ! Contains beta array and other global parameters.
   use RNG                   ! Provides RandomUniform subroutine.
   implicit none
-  integer(int32),dimension(L_rep_max) :: cnt_exchange
+  integer(int32),dimension(L_rep_max) :: cnt_exchange, idx_exchange
 contains
 
   !----------------------------------------------------------
@@ -47,7 +47,7 @@ contains
     real(fp_kind), dimension(:), intent(in) :: beta_array
     integer(int32), intent(in) :: exchange_step  ! Exchange step counter
     real(fp_kind) :: logL_lower, logL_higher, delta_swap, r_swap, u
-    integer(int32) :: l, num_replica
+    integer(int32) :: l, num_replica,idx_tmp
 
     ! Get the number of replicas in the array.
     num_replica = size(theta_array)
@@ -64,6 +64,9 @@ contains
             call SwapModelParameters(theta_array(l), theta_array(l+1))
             !print *,"exchange",l,"<->",l+1
             cnt_exchange(l) = cnt_exchange(l)+1
+            idx_tmp = idx_exchange(l+1)
+            idx_exchange(l+1) = idx_exchange(l)
+            idx_exchange(l) = idx_tmp
           else if(delta_swap<-1000) then
             continue
           else 
@@ -73,6 +76,9 @@ contains
               call SwapModelParameters(theta_array(l), theta_array(l+1))
               !print *,"exchange",l,"<->",l+1
               cnt_exchange(l) = cnt_exchange(l)+1
+              idx_tmp = idx_exchange(l+1)
+              idx_exchange(l+1) = idx_exchange(l)
+              idx_exchange(l) = idx_tmp
             end if
           end if
        end do
@@ -83,9 +89,12 @@ contains
           logL_higher = ComputeLogLikelihood(theta_array(l+1))
           delta_swap = (beta_array(l+1) - beta_array(l)) * (logL_lower - logL_higher)
           if (0<delta_swap) then
-             call SwapModelParameters(theta_array(l), theta_array(l+1))
-             !print *,"exchange",l,"<->",l+1
+            call SwapModelParameters(theta_array(l), theta_array(l+1))
+            !print *,"exchange",l,"<->",l+1
             cnt_exchange(l) = cnt_exchange(l)+1
+            idx_tmp = idx_exchange(l+1)
+            idx_exchange(l+1) = idx_exchange(l)
+            idx_exchange(l) = idx_tmp
           else if(delta_swap<-1000) then
             continue
           else
@@ -94,7 +103,10 @@ contains
             if (u < min(1.0d0, r_swap)) then
               call SwapModelParameters(theta_array(l), theta_array(l+1))
               !print *,"exchange",l,"<->",l+1
-            cnt_exchange(l) = cnt_exchange(l)+1
+              cnt_exchange(l) = cnt_exchange(l)+1
+              idx_tmp = idx_exchange(l+1)
+              idx_exchange(l+1) = idx_exchange(l)
+              idx_exchange(l) = idx_tmp
             end if
           end if
        end do

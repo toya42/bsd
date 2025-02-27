@@ -20,12 +20,12 @@ program BayesianDeconvolution
   use FaddeevaTable
   implicit none
 
-  integer(int32) :: t, l, exchange_step, i, b, exchange_unit
+  integer(int32) :: t, l, exchange_step, i, b, exchange_unit, idx_unit
   type(ModelParameters), allocatable, dimension(:) :: theta_array
   type(ModelParameters) :: theta_mode
   real(fp_kind) :: currentLogL,accept_ratio
   real(fp_kind), allocatable, dimension(:) :: avgLogL
-  character(len=20) :: fmt_exchange
+  character(len=20) :: fmt_exchange, fmt_idx
 
   !-----------------------------------------------------------
   ! Read experimental data from CSV file.
@@ -55,11 +55,12 @@ program BayesianDeconvolution
   !beta(2) = 0.4d0
   !beta(3) = 0.7d0
   !beta(4) = 1.0d0
-  do l=2,L_rep
-    beta(l) = 1.075**(l-L_rep)
+  do l=1,L_rep
+    beta(l) = 1.2**(l-L_rep)
+    idx_exchange(l) = l
     !print *,beta(l)
-   end do
-  beta(1) = beta(2)*0.5
+  end do
+  !beta(1) = beta(2)*0.5
   !-----------------------------------------------------------
   ! Initialize Model Parameters for Each Replica.
   ! For demonstration, we use the same initial guess for each replica.
@@ -98,12 +99,19 @@ program BayesianDeconvolution
   call InitializeCounters(0)
   allocate(c_proposal((2+K1+K2),L_rep))
   c_proposal = 0.5d-2
+
   cnt_exchange = 0.0d0
   write(fmt_exchange,'(I0)') L_rep
   fmt_exchange = '(i8,'//trim(fmt_exchange)//'(f8.2))'
   !print *,fmt_exchange
   exchange_unit=19
   open(exchange_unit,file="exchange.txt",status='replace', action='write', form='formatted')
+
+  write(fmt_idx,'(I0)') L_rep
+  fmt_idx = '(i8,'//trim(fmt_idx)//'(i8))'
+  !print *,fmt_exchange
+  idx_unit=20
+  open(idx_unit,file="index.txt",status='replace', action='write', form='formatted')
 
 
   !-----------------------------------------------------------
@@ -117,16 +125,31 @@ program BayesianDeconvolution
   do t = 1, T_iter
     !print *,t
 
-    !do l=1,L_rep;do b=1,(2+K1+K2);do i=1,K2
-    !  print *,t
-    !  print *,l,b,i
-    !  print *,theta_array(l)%high(i)%A
-    !  print *,theta_array(l)%high(i)%mu
-    !  print *,theta_array(l)%high(i)%sigma_G
-    !  print *,theta_array(l)%high(i)%gamma_L
-    !end do;end do;end do
+    if(mod(t,100)==0) then
+      print *,'iteration:',t
+    end if
 
-    if(mod(t,200)==0 .and. t<=T_burn/2) then
+    do l = 1, L_rep
+        ! Update the parameters for replica l using blockwise MH updates.
+        !call MCMC_UpdateReplica(theta_array(l), beta(l),l)
+        call MCMC_block_UpdateReplica(theta_array(l), beta(l),l)
+        ! Compute the current log-likelihood for replica l.
+        currentLogL = ComputeLogLikelihood(theta_array(l))
+        ! Update the likelihood accumulator for replica l.
+        call UpdateLikelihoodAccumulator(l, currentLogL)
+    end do
+
+
+    ! Increment the exchange step counter.
+    if(mod(t,50)==0) then
+      exchange_step = exchange_step + 1
+      ! Perform odd–even replica exchange across the replicas.
+      call OddEvenExchange(theta_array, beta, exchange_step)
+      write(idx_unit,fmt_idx) t,idx_exchange(1:L_rep)
+    end if
+
+    ! tune c_proposal
+    if(mod(t,100)==0 .and. t<=T_burn/2) then
       do l=1,L_rep
         do b=1,(2+K1+K2)
           accept_ratio = real(accepted_proposals(b,l))/real(total_proposals(b,l))*100
@@ -146,34 +169,24 @@ program BayesianDeconvolution
         end do
       end do
       call InitializeCounters(1)
-    end if
-    if(mod(t,100)==0) then
-      print *,'iteration:',t
-    end if
-    do l = 1, L_rep
-        ! Update the parameters for replica l using blockwise MH updates.
-        !call MCMC_UpdateReplica(theta_array(l), beta(l),l)
-        call MCMC_block_UpdateReplica(theta_array(l), beta(l),l)
-        ! Compute the current log-likelihood for replica l.
-        currentLogL = ComputeLogLikelihood(theta_array(l))
-        ! Update the likelihood accumulator for replica l.
-        call UpdateLikelihoodAccumulator(l, currentLogL)
-    end do
-
-     ! Increment the exchange step counter.
-    if(mod(t,50)==0) then
-        exchange_step = exchange_step + 1
-        ! Perform odd–even replica exchange across the replicas.
-        call OddEvenExchange(theta_array, beta, exchange_step)
+      if(t==T_burn/2) then
+        print *,'c_proposal tuning step completed'
+      end if
     end if
 
+    if(t==T_burn) then
+      print *,'burn-in step completed'
+    end if
+
+    ! store and output data
     if(t > T_burn) then 
       call AppendHistoryEntry(t, theta_array(L_rep))
     end if
      !call AppendHistoryEntry(t, theta_array(L_rep))
     
-    if(mod(t,5000)==0) then
-      write(exchange_unit,fmt_exchange) t,real(cnt_exchange(1:L_rep))/real(50)*1.0d2
+    ! output exchange history
+    if(mod(t,1000)==0) then
+      write(exchange_unit,fmt_exchange) t,real(cnt_exchange(1:L_rep))/real(10)*1.0d2
       !print *, 'exchange output'
       !print fmt_exchange,t, real(cnt_exchange(1:L_rep))/real(50)*1.0d2
       cnt_exchange = 0
@@ -181,7 +194,10 @@ program BayesianDeconvolution
 
   end do
 
-  close(201)
+  print *,'mcmc step completed'
+
+  close(idx_unit)
+  close(exchange_unit)
   call FinalizeHistoryOutput()
 
   !-----------------------------------------------------------
