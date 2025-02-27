@@ -20,12 +20,13 @@ program BayesianDeconvolution
   use FaddeevaTable
   implicit none
 
-  integer(int32) :: t, l, exchange_step, i, b, exchange_unit, idx_unit
+  integer(int32) :: t, l, exchange_step, i, b, exchange_unit, idx_unit, now_unit
+  integer(int32),allocatable,dimension(:) :: idx_now
   type(ModelParameters), allocatable, dimension(:) :: theta_array
   type(ModelParameters) :: theta_mode
   real(fp_kind) :: currentLogL,accept_ratio
   real(fp_kind), allocatable, dimension(:) :: avgLogL
-  character(len=20) :: fmt_exchange, fmt_idx
+  character(len=20) :: fmt_exchange, fmt_idx, fmt_now
 
   !-----------------------------------------------------------
   ! Read experimental data from CSV file.
@@ -116,6 +117,13 @@ program BayesianDeconvolution
   idx_unit=20
   open(idx_unit,file="index.txt",status='replace', action='write', form='formatted')
 
+  write(fmt_now,'(I0)') L_rep
+  fmt_now = '(i8,'//trim(fmt_now)//'(i8))'
+  !print *,fmt_exchange
+  now_unit=21
+  open(now_unit,file="now.txt",status='replace', action='write', form='formatted')
+
+  allocate(idx_now(L_rep))
 
   !-----------------------------------------------------------
   ! Set the replica exchange counter to zero.
@@ -149,6 +157,14 @@ program BayesianDeconvolution
       ! Perform odd–even replica exchange across the replicas.
       call OddEvenExchange(theta_array, beta, exchange_step)
       write(idx_unit,fmt_idx) t,idx_exchange(1:L_rep)
+      do l=1,L_rep
+        do b=1,L_rep
+          if(l==idx_exchange(b)) then
+            idx_now(l) = b
+          end if
+        end do
+      end do
+      write(now_unit,fmt_now) t,idx_now(1:L_rep)
     end if
 
     ! tune c_proposal
@@ -189,10 +205,11 @@ program BayesianDeconvolution
     
     ! output exchange history
     if(mod(t,1000)==0) then
-      write(exchange_unit,fmt_exchange) t,real(cnt_exchange(1:L_rep))/real(10)*1.0d2
+      write(exchange_unit,fmt_exchange) t,real(cnt_exchange(1:L_rep))/real(total_exchange(1:L_rep))*1.0d2
       !print *, 'exchange output'
       !print fmt_exchange,t, real(cnt_exchange(1:L_rep))/real(50)*1.0d2
       cnt_exchange = 0
+      total_exchange = 0
     end if
 
   end do
