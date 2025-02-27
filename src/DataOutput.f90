@@ -4,14 +4,14 @@
 !          export the experimental and restored spectrum.
 !=====================================================================
 module DataOutput
-  use, intrinsic :: iso_fortran_env, only: int32, real64
+  use, intrinsic :: iso_fortran_env
   use precision, only : fp_kind
   use GlobalData
   use ModelFunctions
   implicit none
 
-  integer, parameter :: BUFFER_SIZE = 5000
-  integer :: history_length
+  integer(int32), parameter :: BUFFER_SIZE = 100
+  integer(int32) :: history_length
   ! Explanation:
   ! 1: iteration number
   ! 5: step parameters [Ba, Bb, H, E0, Gamma]
@@ -21,13 +21,15 @@ module DataOutput
 
   ! Buffer for storing history entries (each row is one entry)
   real(fp_kind), allocatable, dimension(:,:) :: history_buffer
-  integer :: buffer_count = 0
+  integer(int32) :: buffer_count = 0
 
-  integer, private :: history_unit = 99       ! File unit for history output.
-  integer, private :: spectrum_unit = 100       ! File unit for spectrum export.
+  integer(int32), private :: history_unit = 99       ! File unit for history output.
+  integer(int32), private :: spectrum_unit = 100       ! File unit for spectrum export.
   logical :: history_initialized = .false.
   logical :: spectrum_initialized = .false.
   
+  character(len=64) :: fmt1,fmt2
+
 contains
 
   !----------------------------------------------------------
@@ -39,9 +41,11 @@ contains
   subroutine InitializeHistoryOutput(filename)
     implicit none
     character(len=*), intent(in) :: filename
-    integer :: iostat_local
-    character(len=K1*10) :: c_low
-    character(len=K2*10) :: c_high
+    integer(int32) :: iostat_local,idx,i
+    character(len=20),dimension(8) :: c_temp
+    character(len=20),dimension(10+4*K1+4*K2) :: header
+    character(len=50) :: c_idx, c_pn
+
 
     history_length = 1 + 5 + 4 + 4*K1 + 4*K2
 
@@ -54,11 +58,64 @@ contains
     allocate(history_buffer(BUFFER_SIZE, history_length))
     buffer_count = 0
     ! Write CSV header.
-    
-    c_low = repeat("A,m,sG,gL,",K1)
-    c_high = repeat("A,m,sG,gL,",K2)//"A,m,sG,gL"
-    write(history_unit,*) 'Iter,Ba,Bb,H,E0,Gamma,AW,mW,sGW,gLW,' // &
-                                 c_low // c_high
+
+    write(fmt1,'(I0)') history_length
+    fmt1 = '('//trim(fmt1)//'(a20))'
+    write(fmt2,'(I0)') history_length
+    fmt2 = '('//trim(fmt2)//'(E20.8e3))'
+    !print *, fmt1,fmt2
+
+    header(1) = '1_iteration'
+    ! step
+    header( 2) = '2_Step_Ba'
+    header( 3) = '3_Step_Bb'
+    header( 4) = '4_Step_H'
+    header( 5) = '5_Step_E0'
+    header( 6) = '6_Step_Gamma'
+    ! wl
+    header( 7) = '7_WL_A'
+    header( 8) = '8_WL_mu'
+    header( 9) = '9_WL_Sigma'
+    header(10) = '10_WL_Gamma'
+
+    c_temp(1) = '_low_A'
+    c_temp(2) = '_low_mu'
+    c_temp(3) = '_low_Sigma'
+    c_temp(4) = '_low_Gamma'
+    c_temp(5) = '_high_A'
+    c_temp(6) = '_high_mu'
+    c_temp(7) = '_high_Sigma'
+    c_temp(8) = '_high_Gamma'
+
+
+    idx = 11
+    do i=1,K1
+      write(c_pn,'(I0)') i
+      write(c_idx,'(I0)') idx
+      header(idx  ) = trim(c_idx)//"_"//trim(c_pn)//trim(c_temp(1))
+      write(c_idx,'(I0)') idx+1
+      header(idx+1) = trim(c_idx)//"_"//trim(c_pn)//trim(c_temp(2))
+      write(c_idx,'(I0)') idx+2
+      header(idx+2) = trim(c_idx)//"_"//trim(c_pn)//trim(c_temp(3))
+      write(c_idx,'(I0)') idx+3
+      header(idx+3) = trim(c_idx)//"_"//trim(c_pn)//trim(c_temp(4))
+      idx = idx+4
+    end do
+    do i=1,K2
+      write(c_pn,'(I0)') i
+      write(c_idx,'(I0)') idx
+      header(idx  ) = trim(c_idx)//"_"//trim(c_pn)//trim(c_temp(5))
+      write(c_idx,'(I0)') idx+1
+      header(idx+1) = trim(c_idx)//"_"//trim(c_pn)//trim(c_temp(6))
+      write(c_idx,'(I0)') idx+2
+      header(idx+2) = trim(c_idx)//"_"//trim(c_pn)//trim(c_temp(7))
+      write(c_idx,'(I0)') idx+3
+      header(idx+3) = trim(c_idx)//"_"//trim(c_pn)//trim(c_temp(8))
+      idx = idx+4
+    end do
+
+    write(history_unit,fmt1) header(:)
+
   end subroutine InitializeHistoryOutput
 
   !----------------------------------------------------------
@@ -121,7 +178,7 @@ contains
 
     do i = 1, buffer_count
        ! Write one history line as CSV.
-       write(history_unit,*) history_buffer(i, :)
+       write(history_unit,fmt2) history_buffer(i, :)
     end do
     buffer_count = 0
   end subroutine FlushHistoryBuffer

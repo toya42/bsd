@@ -5,12 +5,13 @@
 !          a ModelParameters structure.
 !=====================================================================
 module PosteriorStatistics
-  use, intrinsic :: iso_fortran_env, only: int32, real64
+  use, intrinsic :: iso_fortran_env
   use precision, only: fp_kind
   use GlobalData
   use ModelFunctions
+  use DataOutput, only: fmt2
   implicit none
-  integer, parameter :: NBINS = 50  ! Number of bins for histogram mode calculation.
+  integer, parameter :: NBINS = 100  ! Number of bins for histogram mode calculation.
 contains
 
   !----------------------------------------------------------
@@ -116,7 +117,7 @@ contains
           cycle
        end if
 
-       read(unit,*) temp_row
+       read(unit,fmt2) temp_row
        !print *,"temp_row",temp_row
 
        !if (ios /= 0) exit
