@@ -55,7 +55,7 @@ program BayesianDeconvolution
   !beta(3) = 0.7d0
   !beta(4) = 1.0d0
   do l=2,L_rep
-    beta(l) = 1.15**(l-L_rep)
+    beta(l) = 1.075**(l-L_rep)
     !print *,beta(l)
    end do
   beta(1) = beta(2)*0.5
@@ -126,14 +126,14 @@ program BayesianDeconvolution
           else if(accept_ratio>50.0) then
             c_proposal(b,l) = c_proposal(b,l)*1.1
           end if
-          if(t==T_burn/2) then
-            print *,'iteration:',t
-            print *,'Replica:',l
-            print *,'block:',b
-            print '("accept ratio(%) = ",f6.2)',accept_ratio
-            print '(i5,"/",i5)', accepted_proposals(b,l),total_proposals(b,l)
-            print '("c_proposal = ",f9.5)',c_proposal(b,l)
-          end if
+          !if(t==T_burn/2) then
+          !  print *,'iteration:',t
+          !  print *,'Replica:',l
+          !  print *,'block:',b
+          !  print '("accept ratio(%) = ",f6.2)',accept_ratio
+          !  print '(i5,"/",i5)', accepted_proposals(b,l),total_proposals(b,l)
+          !  print '("c_proposal = ",f9.5)',c_proposal(b,l)
+          !end if
         end do
       end do
       call InitializeCounters(1)

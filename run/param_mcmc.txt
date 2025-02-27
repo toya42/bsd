@@ -1,5 +1,5 @@
 50000   T_iter
-20000   T_burn
-   50   L_rep
-    8   K1
-    8   K2
+10000   T_burn
+  200   L_rep
+    4   K1
+    4   K2

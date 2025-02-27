@@ -242,7 +242,7 @@ contains
        fr = f_ratio(E(i), theta_est)
        restored_val = fr*I_inc(i)
        !print *,E(i),restored_val
-       write(spectrum_unit, *) E(i), I_inc(i), I_ab(i), fr, restored_val,step,wl,low,high, step+wl
+       write(spectrum_unit, '(10E18.8e3)') E(i), I_inc(i), I_ab(i), fr, restored_val,step,wl,low,high, step+wl
     end do
 
    e0 = theta_est%step%E0
@@ -250,14 +250,16 @@ contains
    write(16,*) 'step'
    write(16,*) e0
    write(16,*) 'WL'
-   write(16,*) e0+theta_est%WL%mu_WL, theta_est%WL%A_WL, theta_est%WL%sigma_G_WL, theta_est%WL%gamma_L_WL
+   write(16,'(4E18.8e3)') e0+theta_est%WL%mu_WL, theta_est%WL%A_WL, theta_est%WL%sigma_G_WL, theta_est%WL%gamma_L_WL
    write(16,*) 'low'
    do i=1,K1
-      write(16,*) i,e0-theta_est%low(i)%mu, theta_est%low(i)%A, theta_est%low(i)%sigma_G, theta_est%low(i)%gamma_L
+      write(16,*) i
+      write(16,'(4E18.8e3)') e0-theta_est%low(i)%mu, theta_est%low(i)%A, theta_est%low(i)%sigma_G, theta_est%low(i)%gamma_L
    end do
    write(16,*) 'high'
    do i=1,K2
-      write(16,*) i,e0+theta_est%high(i)%mu, theta_est%high(i)%A, theta_est%high(i)%sigma_G, theta_est%high(i)%gamma_L
+      write(16,*) i
+      write(16,'(4E18.8e3)') e0+theta_est%high(i)%mu, theta_est%high(i)%A, theta_est%high(i)%sigma_G, theta_est%high(i)%gamma_L
    end do
 
    emin = E(1)
@@ -273,7 +275,7 @@ contains
       fr = f_ratio(ene, theta_est)
       restored_val = fr*I_inc_ave
       !print *,E(i),restored_val
-      write(17, *) ene, fr, restored_val,step,wl,low,high
+      write(17, '(7E18.8e3)') ene, fr, restored_val,step,wl,low,high
    end do
   
 
