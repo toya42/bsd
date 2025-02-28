@@ -64,7 +64,7 @@ contains
             call SwapModelParameters(theta_array(l), theta_array(l+1))
             !print *,"exchange",l,"<->",l+1
             cnt_exchange(l) = cnt_exchange(l)+1
-            cnt_exchange(l+1) = cnt_exchange(l+1)+1
+            !cnt_exchange(l+1) = cnt_exchange(l+1)+1
             idx_tmp = idx_exchange(l+1)
             idx_exchange(l+1) = idx_exchange(l)
             idx_exchange(l) = idx_tmp
@@ -77,14 +77,14 @@ contains
               call SwapModelParameters(theta_array(l), theta_array(l+1))
               !print *,"exchange",l,"<->",l+1
               cnt_exchange(l) = cnt_exchange(l)+1
-              cnt_exchange(l+1) = cnt_exchange(l+1)+1
+              !cnt_exchange(l+1) = cnt_exchange(l+1)+1
               idx_tmp = idx_exchange(l+1)
               idx_exchange(l+1) = idx_exchange(l)
               idx_exchange(l) = idx_tmp
             end if
           end if
           total_exchange(l) = total_exchange(l)+1
-          total_exchange(l+1) = total_exchange(l+1)+1
+          !total_exchange(l+1) = total_exchange(l+1)+1
        end do
     else
        ! Even-indexed exchange: swap replicas 2-3, 4-5, etc.
@@ -96,7 +96,7 @@ contains
             call SwapModelParameters(theta_array(l), theta_array(l+1))
             !print *,"exchange",l,"<->",l+1
             cnt_exchange(l) = cnt_exchange(l)+1
-            cnt_exchange(l+1) = cnt_exchange(l+1)+1
+            !cnt_exchange(l+1) = cnt_exchange(l+1)+1
             idx_tmp = idx_exchange(l+1)
             idx_exchange(l+1) = idx_exchange(l)
             idx_exchange(l) = idx_tmp
@@ -109,14 +109,14 @@ contains
               call SwapModelParameters(theta_array(l), theta_array(l+1))
               !print *,"exchange",l,"<->",l+1
               cnt_exchange(l) = cnt_exchange(l)+1
-              cnt_exchange(l+1) = cnt_exchange(l+1)+1
+              !cnt_exchange(l+1) = cnt_exchange(l+1)+1
               idx_tmp = idx_exchange(l+1)
               idx_exchange(l+1) = idx_exchange(l)
               idx_exchange(l) = idx_tmp
             end if
           end if
           total_exchange(l) = total_exchange(l)+1
-          total_exchange(l+1) = total_exchange(l+1)+1
+          !total_exchange(l+1) = total_exchange(l+1)+1
        end do
     end if
 

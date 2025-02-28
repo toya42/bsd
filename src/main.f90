@@ -60,10 +60,12 @@ program BayesianDeconvolution
     !beta(l) = 1.2**(l-L_rep)
     !beta(l) = log(l+0.1d0)/log(L_rep+0.1)
     !beta(l) = real(l)/real(L_rep)
-    beta(l) = (real(l)/real(L_rep)+1.2d0**(l-L_rep))*0.5d0
+    !beta(l) = (real(l)/real(L_rep)+1.2d0**(l-L_rep))*0.5d0
+    beta(l) = 0.5d0*tanh((l-L_rep*0.5)/(L_rep*0.2))+0.5
     idx_exchange(l) = l
     !print *,beta(l)
   end do
+  beta(L_rep) = 1.0d0
   !beta(1) = beta(2)*0.5
   !-----------------------------------------------------------
   ! Initialize Model Parameters for Each Replica.
@@ -105,7 +107,7 @@ program BayesianDeconvolution
   c_proposal = 0.5d-2
 
   cnt_exchange = 0.0d0
-  write(fmt_exchange,'(I0)') L_rep
+  write(fmt_exchange,'(I0)') L_rep-1
   fmt_exchange = '(i8,'//trim(fmt_exchange)//'(f8.2))'
   !print *,fmt_exchange
   exchange_unit=19
@@ -197,20 +199,52 @@ program BayesianDeconvolution
       print *,'burn-in step completed'
     end if
 
+    ! output exchange history
+    if(mod(t,1000)==0) then
+      write(exchange_unit,fmt_exchange) t,real(cnt_exchange(1:L_rep-1))/real(total_exchange(1:L_rep-1))*1.0d2
+      !print *, 'exchange output'
+      !print fmt_exchange,t, real(cnt_exchange(1:L_rep))/real(50)*1.0d2
+      block
+        real(fp_kind) :: exr1, exr2
+        real(fp_kind),parameter :: c_delta = 0.2d0
+        if(t<=T_burn/2) then
+          do l=1,L_rep-2
+            exr1 = real(cnt_exchange(l  ))/real(total_exchange(l  ))*1.0d2
+            exr2 = real(cnt_exchange(l+1))/real(total_exchange(l+1))*1.0d2
+            if(exr1>=60.0 .and. exr2>=60.0) then
+              !print *, 'tune beta (case1)'
+              !print *, 'l=',l+1,l+2
+              !print *, '<beta_before>',beta(l),beta(l+1)
+              beta(l+1) = beta(l+1)-(beta(l+1)-beta(l))*c_delta
+              beta(l+2) = beta(l+2)-(beta(l+2)-beta(l+1))*c_delta
+              !print *, '<beta_after >',beta(l+1),beta(l+2)
+            else if(exr1<exr2 .and. exr2>=60.0) then
+              !print *, 'tune beta (case2)'
+              !print *, 'l=',l+1
+              !print *, '<beta_before>',beta(l+1)
+              beta(l+1) = beta(l+1)-(beta(l+1)-beta(l))*c_delta
+              !print *, '<beta_after >',beta(l+1)
+            else if(exr1>exr2 .and. exr1>=60.0) then
+              !print *, 'tune beta (case3)'
+              !print *, 'l=',l+1
+              !print *, '<beta_before>',beta(l+1)
+              beta(l+1) = beta(l+1)+(beta(l+2)-beta(l+1))*c_delta
+              !print *, '<beta_after >',beta(l+1)
+            end if
+            beta(L_rep) = 1.0d0
+          end do
+        end if
+      end block
+      cnt_exchange = 0
+      total_exchange = 0
+    end if
+
     ! store and output data
     if(t > T_burn) then 
       call AppendHistoryEntry(t, theta_array(L_rep))
     end if
      !call AppendHistoryEntry(t, theta_array(L_rep))
     
-    ! output exchange history
-    if(mod(t,1000)==0) then
-      write(exchange_unit,fmt_exchange) t,real(cnt_exchange(1:L_rep))/real(total_exchange(1:L_rep))*1.0d2
-      !print *, 'exchange output'
-      !print fmt_exchange,t, real(cnt_exchange(1:L_rep))/real(50)*1.0d2
-      cnt_exchange = 0
-      total_exchange = 0
-    end if
 
   end do
 
@@ -220,6 +254,9 @@ program BayesianDeconvolution
   close(exchange_unit)
   call FinalizeHistoryOutput()
 
+  do l=1,L_rep
+    write(31,*) l,beta(l)
+  end do
   !-----------------------------------------------------------
   ! Post-processing: Compute Average Log-Likelihoods and Marginal Likelihood.
   !-----------------------------------------------------------
