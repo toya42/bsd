@@ -59,4 +59,44 @@ contains
     end do
   end subroutine BubbleSortPeaks
 
+  subroutine BubbleSortBetas(betas, ascending)
+    implicit none
+    real(fp_kind), intent(inout) :: betas(:)
+    logical, intent(in), optional :: ascending
+    logical :: asc
+    integer :: n, i
+    real(real64) :: temp
+    logical :: swapped
+
+    if (present(ascending)) then
+       asc = ascending
+    else
+       asc = .true.
+    end if
+
+    n = size(betas)
+    do
+       swapped = .false.
+       do i = 1, n - 1
+          if (asc) then
+             if (betas(i) > betas(i+1)) then
+                temp = betas(i)
+                betas(i) = betas(i+1)
+                betas(i+1) = temp
+                swapped = .true.
+             end if
+          else
+             if (betas(i) < betas(i+1)) then
+                temp = betas(i)
+                betas(i) = betas(i+1)
+                betas(i+1) = temp
+                swapped = .true.
+             end if
+          end if
+       end do
+       if (.not. swapped) exit
+    end do
+  end subroutine BubbleSortBetas
+
+
 end module SortPeaks

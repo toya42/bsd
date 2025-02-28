@@ -18,6 +18,7 @@ program BayesianDeconvolution
   use RNG
   use PriorProposal, only : c_proposal
   use FaddeevaTable
+  use SortPeaks
   implicit none
 
   integer(int32) :: t, l, exchange_step, i, b, exchange_unit, idx_unit, now_unit
@@ -154,7 +155,7 @@ program BayesianDeconvolution
 
 
     ! Increment the exchange step counter.
-    if(mod(t,50)==0) then
+    if(mod(t,100)==0) then
       exchange_step = exchange_step + 1
       ! Perform odd–even replica exchange across the replicas.
       call OddEvenExchange(theta_array, beta, exchange_step)
@@ -200,7 +201,7 @@ program BayesianDeconvolution
     end if
 
     ! output exchange history
-    if(mod(t,1000)==0) then
+    if(mod(t,2000)==0) then
       write(exchange_unit,fmt_exchange) t,real(cnt_exchange(1:L_rep-1))/real(total_exchange(1:L_rep-1))*1.0d2
       !print *, 'exchange output'
       !print fmt_exchange,t, real(cnt_exchange(1:L_rep))/real(50)*1.0d2
@@ -231,8 +232,14 @@ program BayesianDeconvolution
               beta(l+1) = beta(l+1)+(beta(l+2)-beta(l+1))*c_delta
               !print *, '<beta_after >',beta(l+1)
             end if
-            beta(L_rep) = 1.0d0
           end do
+          beta(L_rep) = 1.0d0
+          call BubbleSortBetas(beta, .true.)
+          if(t==T_burn/2) then
+            do l=1,L_rep
+              write(31,*) l,beta(l)
+            end do
+          end if
         end if
       end block
       cnt_exchange = 0
@@ -254,9 +261,6 @@ program BayesianDeconvolution
   close(exchange_unit)
   call FinalizeHistoryOutput()
 
-  do l=1,L_rep
-    write(31,*) l,beta(l)
-  end do
   !-----------------------------------------------------------
   ! Post-processing: Compute Average Log-Likelihoods and Marginal Likelihood.
   !-----------------------------------------------------------
