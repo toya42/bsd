@@ -61,8 +61,8 @@ program BayesianDeconvolution
     !beta(l) = 1.2**(l-L_rep)
     !beta(l) = log(l+0.1d0)/log(L_rep+0.1)
     !beta(l) = real(l)/real(L_rep)
-    !beta(l) = (real(l)/real(L_rep)+1.2d0**(l-L_rep))*0.5d0
-    beta(l) = 0.5d0*tanh((l-L_rep*0.5)/(L_rep*0.2))+0.5
+    beta(l) = (real(l)/real(L_rep)+1.2d0**(l-L_rep))*0.5d0
+    !beta(l) = 0.5d0*tanh((l-L_rep*0.5)/(L_rep*0.2))+0.5
     idx_exchange(l) = l
     !print *,beta(l)
   end do
@@ -172,7 +172,7 @@ program BayesianDeconvolution
     end if
 
     ! tune c_proposal
-    if(mod(t,100)==0 .and. t<=T_burn/2) then
+    if(mod(t,500)==0 .and. t<=T_burn/2) then
       do l=1,L_rep
         do b=1,(2+K1+K2)
           accept_ratio = real(accepted_proposals(b,l))/real(total_proposals(b,l))*100
