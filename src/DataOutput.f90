@@ -228,24 +228,25 @@ contains
     implicit none
     type(ModelParameters) :: theta_est
     integer(int32) :: i,enum
-    real(fp_kind) :: restored_val,step,wl,low,high,fr,emin,emax,ene,I_inc_ave,e0
+    real(fp_kind) :: restored_val,step,wl,low,high,fr,emin,emax,ene,I_inc_ave,e0,ewl
     if (.not. spectrum_initialized) then
        print *, "Spectrum output file not initialized."
        stop
     end if
 
+    e0 = theta_est%step%E0
+    ewl = e0+theta_est%WL%mu_WL
     do i = 1, N
        step = f_step(E(i), theta_est%step) *I_inc(i)
        wl = f_WL(E(i), theta_est%WL, theta_est%step%E0)*I_inc(i)
-       low = f_low(E(i), theta_est%low, theta_est%step%E0)*I_inc(i)
-       high = f_high(E(i), theta_est%high, theta_est%step%E0)*I_inc(i)
+       low = f_low(E(i), theta_est%low, ewl)*I_inc(i)
+       high = f_high(E(i), theta_est%high, ewl)*I_inc(i)
        fr = f_ratio(E(i), theta_est)
        restored_val = fr*I_inc(i)
        !print *,E(i),restored_val
        write(spectrum_unit, '(10E18.8e3)') E(i), I_inc(i), I_ab(i), fr, restored_val,step,wl,low,high, step+wl
     end do
 
-   e0 = theta_est%step%E0
    write(16,*) '==peak position=='
    write(16,*) 'step'
    write(16,*) e0
@@ -270,8 +271,8 @@ contains
       ene = (emax-emin)/real(enum)*real(i)+emin
       step = f_step(ene, theta_est%step) *I_inc_ave
       wl = f_WL(ene, theta_est%WL, theta_est%step%E0)*I_inc_ave
-      low = f_low(ene, theta_est%low, theta_est%step%E0)*I_inc_ave
-      high = f_high(ene, theta_est%high, theta_est%step%E0)*I_inc_ave
+      low = f_low(ene, theta_est%low, ewl)*I_inc_ave
+      high = f_high(ene, theta_est%high, ewl)*I_inc_ave
       fr = f_ratio(ene, theta_est)
       restored_val = fr*I_inc_ave
       !print *,E(i),restored_val

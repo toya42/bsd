@@ -154,6 +154,7 @@ contains
     implicit none
     real(fp_kind), intent(in) :: E
     type(ModelParameters), intent(in) :: theta
+    real(fp_kind) :: E_WL
 
     !print *,"f_ratio",f_ratio
     !print *, theta%step
@@ -162,10 +163,10 @@ contains
     !print *,"Low",f_low(E, theta%low)
     !print *,"High",f_high(E, theta%high)
 
-
+    E_WL = theta%step%E0+theta%WL%mu_WL
     f_ratio = f_step(E, theta%step) + f_WL(E, theta%WL, theta%step%E0) &
-                                   + f_low(E, theta%low, theta%step%E0)&
-                                   + f_high(E, theta%high, theta%step%E0)
+                                   + f_low(E, theta%low, E_WL)&
+                                   + f_high(E, theta%high, E_WL)
 
     !if(f_ratio<0.0) then
     !    print *,"negative f_ratio"
