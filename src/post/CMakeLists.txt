@@ -25,12 +25,12 @@ endif()
 
 
 add_executable(${EXECUTABLE}
-  precision.f90
-  GlobalData.f90
-  DataInput.f90
+  ../precision.f90
+  ../GlobalData.f90
+  ../DataInput.f90
   DataOutput.f90
-  FaddeevaTable.f90
-  ModelFunctions.f90
+  ../FaddeevaTable.f90
+  ../ModelFunctions.f90
   PosteriorStatistics.f90
   main.f90
   )
