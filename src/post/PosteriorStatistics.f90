@@ -12,7 +12,7 @@ module PosteriorStatistics
   use DataOutput, only: fmt2
   implicit none
   !integer, parameter :: NBINS = 100  ! Number of bins for histogram mode calculation.
-  integer :: NBINS
+  integer :: NBINS,nhist
 contains
 
   !----------------------------------------------------------
@@ -104,6 +104,7 @@ contains
     end do
     close(unit)
 
+    n_history = min(n_history,nhist)
     !print *,"n_history",n_history
     !print *,"n_columns",n_columns
 

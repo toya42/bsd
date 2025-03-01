@@ -156,7 +156,7 @@ program BayesianDeconvolution
 
 
     ! Increment the exchange step counter.
-    if(mod(t,100)==0) then
+    if(mod(t,1000)==0) then
       exchange_step = exchange_step + 1
       ! Perform odd–even replica exchange across the replicas.
       call OddEvenExchange(theta_array, beta, exchange_step)
@@ -172,7 +172,7 @@ program BayesianDeconvolution
     end if
 
     ! tune c_proposal
-    if(mod(t,500)==0 .and. t<=T_burn/2) then
+    if(mod(t,2000)==0 .and. t<=T_burn/2) then
       do l=1,L_rep
         do b=1,(2+K1+K2)
           accept_ratio = real(accepted_proposals(b,l))/real(total_proposals(b,l))*100
@@ -202,13 +202,13 @@ program BayesianDeconvolution
     end if
 
     ! output exchange history
-    if(mod(t,2000)==0) then
+    if(mod(t,20000)==0) then
       write(exchange_unit,fmt_exchange) t,real(cnt_exchange(1:L_rep-1))/real(total_exchange(1:L_rep-1))*1.0d2
       !print *, 'exchange output'
       !print fmt_exchange,t, real(cnt_exchange(1:L_rep))/real(50)*1.0d2
       block
         real(fp_kind) :: exr1, exr2
-        real(fp_kind),parameter :: c_delta = 0.1d0
+        real(fp_kind),parameter :: c_delta = 0.2d0
         !logical :: lp1
         if(t<=T_burn/2) then
          ! lp1 = .false.

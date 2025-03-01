@@ -65,7 +65,7 @@ contains
     fmt2 = '('//trim(fmt2)//'(E20.8e3))'
     !print *, fmt1,fmt2
 
-    header(1) = '1_iteration'
+    header(1) = '#1_iteration'
     ! step
     header( 2) = '2_Step_Ba'
     header( 3) = '3_Step_Bb'
@@ -114,7 +114,7 @@ contains
       idx = idx+4
     end do
 
-    !write(history_unit,fmt1) header(:)
+    write(history_unit,fmt1) header(:)
 
   end subroutine InitializeHistoryOutput
 

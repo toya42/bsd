@@ -20,20 +20,20 @@ module PriorProposal
   real(fp_kind), parameter :: alpha_A_WL = 10.0d0, beta_A_WL = 5.0d-7, sigma_A_WL = 1.0d-5
   real(fp_kind), parameter :: mu_mu_WL = 0.0d0, sigma_mu_WL = 2.0d0
   !real(fp_kind), parameter :: a_mu_WL = -20.0d0, b_mu_WL = 20.0d0, sigma_mu_WL      = 5.0d0
-  real(fp_kind), parameter :: a_sigma_G_WL = 1.0d-5, b_sigma_G_WL = 1.0d2, sigma_sigma_G_WL = 1.0d-0
-  real(fp_kind), parameter :: a_gamma_L_WL = 1.0d-5, b_gamma_L_WL = 1.0d2, sigma_gamma_L_WL = 5.0d-1
+  real(fp_kind), parameter :: a_sigma_G_WL = 1.0d-2, b_sigma_G_WL = 1.0d2, sigma_sigma_G_WL = 1.0d-0
+  real(fp_kind), parameter :: a_gamma_L_WL = 1.0d-2, b_gamma_L_WL = 1.0d2, sigma_gamma_L_WL = 5.0d-1
   
   ! Prior parameters for each low-energy peak:
   real(fp_kind), parameter :: alpha_low_A = 10.0d0, beta_low_A = 5.0d-7, sigma_low_A = 1.0d-5
   real(fp_kind), parameter :: a_low_mu      = 0.0d0, b_low_mu = 30.0d0, sigma_low_mu      = 5.0d0
-  real(fp_kind), parameter :: a_low_sigma_G = 1.0d-5, b_low_sigma_G = 1.0d2, sigma_low_sigma_G = 1.0d-0
-  real(fp_kind), parameter :: a_low_gamma_L = 1.0d-5, b_low_gamma_L = 1.0d2, sigma_low_gamma_L = 5.0d-1
+  real(fp_kind), parameter :: a_low_sigma_G = 1.0d-2, b_low_sigma_G = 1.0d2, sigma_low_sigma_G = 1.0d-0
+  real(fp_kind), parameter :: a_low_gamma_L = 1.0d-2, b_low_gamma_L = 1.0d2, sigma_low_gamma_L = 5.0d-1
   
   ! Prior parameters for each high-energy peak:
   real(fp_kind), parameter :: alpha_high_A = 10.0d0, beta_high_A = 5.0d-7, sigma_high_A = 4.0d-6
   real(fp_kind), parameter :: a_high_mu      = 0.0d0, b_high_mu = 200.0d0, sigma_high_mu      = 1.0d1
-  real(fp_kind), parameter :: a_high_sigma_G = 1.0d-5, b_high_sigma_G = 1.0d2, sigma_high_sigma_G = 1.0d-0
-  real(fp_kind), parameter :: a_high_gamma_L = 1.0d-5, b_high_gamma_L = 1.0d2, sigma_high_gamma_L = 5.0d-1
+  real(fp_kind), parameter :: a_high_sigma_G = 1.0d-2, b_high_sigma_G = 1.0d2, sigma_high_sigma_G = 1.0d-0
+  real(fp_kind), parameter :: a_high_gamma_L = 1.0d-2, b_high_gamma_L = 1.0d2, sigma_high_gamma_L = 5.0d-1
   
   ! Proposal scaling factor.
   real(fp_kind),allocatable, dimension(:,:) :: c_proposal

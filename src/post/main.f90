@@ -32,6 +32,10 @@ program PostProcessing
   read *, NBINS
   print *,NBINS
 
+  print *,'nhist:'
+  read *,nhist
+  print *,nhist
+
   allocate(theta_array(L_rep))
   do l=1,L_rep
     allocate(theta_array(l)%low(K1))
