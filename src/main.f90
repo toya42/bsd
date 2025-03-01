@@ -208,25 +208,44 @@ program BayesianDeconvolution
       !print fmt_exchange,t, real(cnt_exchange(1:L_rep))/real(50)*1.0d2
       block
         real(fp_kind) :: exr1, exr2
-        real(fp_kind),parameter :: c_delta = 0.2d0
+        real(fp_kind),parameter :: c_delta = 0.1d0
+        !logical :: lp1
         if(t<=T_burn/2) then
+         ! lp1 = .false.
           do l=1,L_rep-2
+            !if(lp1) then
+            !  lp1 = .false.
+            !  cycle 
+            !end if
             exr1 = real(cnt_exchange(l  ))/real(total_exchange(l  ))*1.0d2
             exr2 = real(cnt_exchange(l+1))/real(total_exchange(l+1))*1.0d2
-            if(exr1>=60.0 .and. exr2>=60.0) then
+            if(exr1>=70.0 .and. exr2>=70.0) then
               !print *, 'tune beta (case1)'
               !print *, 'l=',l+1,l+2
               !print *, '<beta_before>',beta(l),beta(l+1)
+              if(l>=2) then
+                beta(l  ) = beta(l  )-(beta(l  )-beta(l-1))*c_delta
+              end if
               beta(l+1) = beta(l+1)-(beta(l+1)-beta(l))*c_delta
-              beta(l+2) = beta(l+2)-(beta(l+2)-beta(l+1))*c_delta
               !print *, '<beta_after >',beta(l+1),beta(l+2)
-            else if(exr1<exr2 .and. exr2>=60.0) then
+              !lp1 = .true.
+            else if(exr1<30.0 .and. exr2<30.0) then
+              !print *, 'tune beta (case1)'
+              !print *, 'l=',l+1,l+2
+              !print *, '<beta_before>',beta(l),beta(l+1)
+              if(l>=2) then
+                beta(l  ) = beta(l  )+(beta(l+1)-beta(l  ))*c_delta
+              end if
+              beta(l+1) = beta(l+1)+(beta(l+2)-beta(l+1))*c_delta
+              !print *, '<beta_after >',beta(l+1),beta(l+2)
+              !lp1 = .true.
+            else if(exr1<exr2 .and. exr2>=70.0) then
               !print *, 'tune beta (case2)'
               !print *, 'l=',l+1
               !print *, '<beta_before>',beta(l+1)
               beta(l+1) = beta(l+1)-(beta(l+1)-beta(l))*c_delta
               !print *, '<beta_after >',beta(l+1)
-            else if(exr1>exr2 .and. exr1>=60.0) then
+            else if(exr1>exr2 .and. exr1>=70.0) then
               !print *, 'tune beta (case3)'
               !print *, 'l=',l+1
               !print *, '<beta_before>',beta(l+1)
