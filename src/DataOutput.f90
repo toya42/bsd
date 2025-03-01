@@ -114,7 +114,7 @@ contains
       idx = idx+4
     end do
 
-    write(history_unit,fmt1) header(:)
+    !write(history_unit,fmt1) header(:)
 
   end subroutine InitializeHistoryOutput
 
