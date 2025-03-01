@@ -11,7 +11,7 @@ module PosteriorStatistics
   use ModelFunctions
   use DataOutput, only: fmt2
   implicit none
-  integer, parameter :: NBINS = 50  ! Number of bins for histogram mode calculation.
+  integer, parameter :: NBINS = 100  ! Number of bins for histogram mode calculation.
 contains
 
   !----------------------------------------------------------
