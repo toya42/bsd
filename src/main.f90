@@ -68,6 +68,19 @@ program BayesianDeconvolution
   end do
   beta(L_rep) = 1.0d0
   !beta(1) = beta(2)*0.5
+  Block 
+    integer ::ltmp
+    open(41,file='beta.txt',form='formatted')
+    do l=1,L_rep
+      read(41,*) ltmp,beta(l)
+      !print *,beta(l)
+    end do
+    close(41)
+  end Block
+  !stop
+
+
+
   !-----------------------------------------------------------
   ! Initialize Model Parameters for Each Replica.
   ! For demonstration, we use the same initial guess for each replica.
@@ -106,6 +119,19 @@ program BayesianDeconvolution
   call InitializeCounters(0)
   allocate(c_proposal((2+K1+K2),L_rep))
   c_proposal = 0.5d-2
+  !Block 
+  !  integer ::ltmp,btmp
+  !  open(61,file='c_proposal.txt',form='formatted')
+  !  do l=1,L_rep;do b=1,(2+K1+K2)
+  !    read(61,*) ltmp,btmp,c_proposal(b,l)
+  !    !print *,beta(l)
+  !    end do;end do
+  !  close(61)
+  !end Block
+  !stop
+
+
+
 
   cnt_exchange = 0.0d0
   write(fmt_exchange,'(I0)') L_rep-1
@@ -156,7 +182,7 @@ program BayesianDeconvolution
 
 
     ! Increment the exchange step counter.
-    if(mod(t,1000)==0) then
+    if(mod(t,50)==0) then
       exchange_step = exchange_step + 1
       ! Perform odd–even replica exchange across the replicas.
       call OddEvenExchange(theta_array, beta, exchange_step)
@@ -172,7 +198,7 @@ program BayesianDeconvolution
     end if
 
     ! tune c_proposal
-    if(mod(t,2000)==0 .and. t<=T_burn/2) then
+    if(mod(t,100)==0 .and. t<=T_burn/2) then
       do l=1,L_rep
         do b=1,(2+K1+K2)
           accept_ratio = real(accepted_proposals(b,l))/real(total_proposals(b,l))*100
@@ -202,7 +228,7 @@ program BayesianDeconvolution
     end if
 
     ! output exchange history
-    if(mod(t,20000)==0) then
+    if(mod(t,1000)==0) then
       write(exchange_unit,fmt_exchange) t,real(cnt_exchange(1:L_rep-1))/real(total_exchange(1:L_rep-1))*1.0d2
       !print *, 'exchange output'
       !print fmt_exchange,t, real(cnt_exchange(1:L_rep))/real(50)*1.0d2
@@ -259,6 +285,9 @@ program BayesianDeconvolution
             do l=1,L_rep
               write(31,*) l,beta(l)
             end do
+            do l=1,L_rep;do b=1,(2+K1+K2)
+              write(51,*) l,b,c_proposal(b,l)
+            end do;end do
           end if
         end if
       end block
