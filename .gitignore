@@ -44,5 +44,7 @@ run/spec*
 run/exchange.txt
 run/index.txt
 run/now.txt
+run/ess_history.txt
+run/tau_int_history.txt
 run?
 run??

@@ -119,8 +119,8 @@ contains
           x = dble(i) * h
           y = dble(j) * h
           w = Faddeeva(x, y)
-          wtreal(k) = real(w,fp_kind)
-          wtimag(k) = imag(w)
+          wtreal(k) = w%re
+          wtimag(k) = w%im
        end do
     end do
   end subroutine InitializeFaddeevaTable
@@ -131,29 +131,29 @@ contains
   ! Purpose: Return the complex error function w(z) for given x and y
   ! using the precomputed table via nearest-neighbor lookup.
   !---------------------------------------------------------------------
-  function FastFaddeeva(x, y) result(w)
-    implicit none
-    double precision, intent(in) :: x, y
-    complex(8) :: w
-    integer :: i, j, index
-    ! Ensure x and y are nonnegative for the table (our grid is for x>=0, y>=0)
-    !if (x < 0.d0 .or. y < 0.d0) then
-    !   print *, "FastFaddeeva: x and y must be nonnegative for table lookup."
-    !   print *,'x',x
-    !   print *,'y',y
-    !   stop
-    !end if
-    ! Determine the grid indices. Here we use nearest-neighbor.
-    i = int(x/h + 0.5d0)
-    j = int(y/h + 0.5d0)
-    if (i < 0) i = 0
-    if (i > nx+1) i = nx+1
-    if (j < 0) j = 0
-    if (j > ny+1) j = ny+1
-    ! For Fortran arrays (1-indexed), compute the index.
-    index = i + j*(nx+2) + 1
-    w = cmplx(wtreal(index), wtimag(index))
-  end function FastFaddeeva
+  !function FastFaddeeva(x, y) result(w)
+  !  implicit none
+  !  double precision, intent(in) :: x, y
+  !  complex(8) :: w
+  !  integer :: i, j, index
+  !  ! Ensure x and y are nonnegative for the table (our grid is for x>=0, y>=0)
+  !  !if (x < 0.d0 .or. y < 0.d0) then
+  !  !   print *, "FastFaddeeva: x and y must be nonnegative for table lookup."
+  !  !   print *,'x',x
+  !  !   print *,'y',y
+  !  !   stop
+  !  !end if
+  !  ! Determine the grid indices. Here we use nearest-neighbor.
+  !  i = int(x/h + 0.5d0)
+  !  j = int(y/h + 0.5d0)
+  !  if (i < 0) i = 0
+  !  if (i > nx+1) i = nx+1
+  !  if (j < 0) j = 0
+  !  if (j > ny+1) j = ny+1
+  !  ! For Fortran arrays (1-indexed), compute the index.
+  !  index = i + j*(nx+2) + 1
+  !  w = cmplx(wtreal(index), wtimag(index))
+  !end function FastFaddeeva
 
   function FastFaddeevaReal(x, y) result(r)
     implicit none

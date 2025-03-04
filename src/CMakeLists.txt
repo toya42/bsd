@@ -40,5 +40,6 @@ add_executable(${EXECUTABLE}
   PosteriorStatistics.f90
   ThermodynamicIntegration.f90
   SortPeaks.f90
+  MCMCStats.f90
   main.f90
   )
