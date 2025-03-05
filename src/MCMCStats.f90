@@ -120,7 +120,7 @@ contains
         cycle
       end if
 
-      if(tau_int(i)>0.0d0) then
+      if(tau_int(i)>tau_target) then
         !print *,'l,i:',l,i
         !print *,'before',c_proposal(i,l)
         c_proposal(i,l) = c_proposal(i,l)*exp(rate_cp*(tau_int(i)-tau_target)/tau_target)
