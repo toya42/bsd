@@ -49,7 +49,7 @@ module DataOutput
      character(len=20),dimension(10+4*K1+4*K2) :: header
      character(len=50) :: c_idx, c_pn
  
-    output_count=0
+      output_count=0
 
      history_length = 1 + 5 + 4 + 4*K1 + 4*K2
  
@@ -191,12 +191,11 @@ module DataOutput
      end if
  
      do i = 1, buffer_count
-        ! Write one history line as CSV.
         write(history_unit,fmt2) history_buffer(:,i)
      end do
      buffer_count = 0
 
-    acf_size = min(BUFFER_SIZE/10, BUFFER_SIZE-1)
+    acf_size = min(BUFFER_SIZE/5, BUFFER_SIZE-1)
     allocate(acf(0:acf_size))
 
     output_count = output_count+1

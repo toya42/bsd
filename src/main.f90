@@ -19,6 +19,7 @@ program BayesianDeconvolution
   use PriorProposal, only : c_proposal
   use FaddeevaTable
   use SortPeaks
+  use MCMCStats
   implicit none
 
   integer(int32) :: t, l, exchange_step, i, b, exchange_unit, idx_unit, now_unit
@@ -28,8 +29,8 @@ program BayesianDeconvolution
   real(fp_kind) :: currentLogL,accept_ratio
   real(fp_kind), allocatable, dimension(:) :: avgLogL
   character(len=20) :: fmt_exchange, fmt_idx, fmt_now
-  integer(int32), parameter :: t_ctune = 10000
-  integer(int32), parameter :: t_exchange = 10000
+  !integer(int32), parameter :: t_ctune = 10000
+  integer(int32), parameter :: t_exchange = 1000
   integer(int32), parameter :: t_btune = 10000
 
   !-----------------------------------------------------------
@@ -51,6 +52,7 @@ program BayesianDeconvolution
 
 
   call InitializeHistoryOutput("log.txt")
+  call InitializeHistoryOutputForStats()
   call InitializeFaddeevaTable
   !-----------------------------------------------------------
   ! Initialize Beta (Inverse Temperatures) for Replicas
@@ -61,10 +63,10 @@ program BayesianDeconvolution
   !beta(3) = 0.7d0
   !beta(4) = 1.0d0
   do l=1,L_rep
-    !beta(l) = 1.2**(l-L_rep)
+    beta(l) = 1.2**(l-L_rep)
     !beta(l) = log(l+0.1d0)/log(L_rep+0.1)
     !beta(l) = real(l)/real(L_rep)
-    beta(l) = (real(l)/real(L_rep)+1.2d0**(l-L_rep))*0.5d0
+    !beta(l) = (real(l)/real(L_rep)+1.2d0**(l-L_rep))*0.5d0
     !beta(l) = 0.5d0*tanh((l-L_rep*0.5)/(L_rep*0.2))+0.5
     idx_exchange(l) = l
     !print *,beta(l)
@@ -120,8 +122,8 @@ program BayesianDeconvolution
   !stop
 
   call InitializeCounters(0)
-  allocate(c_proposal((2+K1+K2),L_rep))
-  c_proposal = 0.5d-2
+  allocate(c_proposal((4+5+4*K1+4*K2),L_rep))
+  c_proposal = 0.2d-1
   !Block 
   !  integer ::ltmp,btmp
   !  open(61,file='c_proposal.txt',form='formatted')
@@ -201,37 +203,37 @@ program BayesianDeconvolution
     end if
 
     ! tune c_proposal
-    if(mod(t,t_ctune)==0 .and. t<=T_burn/2) then
-      do l=1,L_rep
-        do b=1,(2+K1+K2)
-          accept_ratio = real(accepted_proposals(b,l))/real(total_proposals(b,l))*100
-          if(accept_ratio<20.0) then
-            c_proposal(b,l) = c_proposal(b,l)*0.9
-          else if(accept_ratio>50.0) then
-            c_proposal(b,l) = c_proposal(b,l)*1.1
-          end if
-          !if(t==T_burn/2) then
-          !  print *,'iteration:',t
-          !  print *,'Replica:',l
-          !  print *,'block:',b
-          !  print '("accept ratio(%) = ",f6.2)',accept_ratio
-          !  print '(i5,"/",i5)', accepted_proposals(b,l),total_proposals(b,l)
-          !  print '("c_proposal = ",f9.5)',c_proposal(b,l)
-          !end if
-        end do
-      end do
-      call InitializeCounters(1)
-      if(t==T_burn/2) then
-        print *,'c_proposal tuning step completed'
-      end if
-    end if
+    !if(mod(t,t_ctune)==0 .and. t<=T_burn/2) then
+    !  do l=1,L_rep
+    !    do b=1,(2+K1+K2)
+    !      accept_ratio = real(accepted_proposals(b,l))/real(total_proposals(b,l))*100
+    !      if(accept_ratio<20.0) then
+    !        c_proposal(b,l) = c_proposal(b,l)*0.9
+    !      else if(accept_ratio>50.0) then
+    !        c_proposal(b,l) = c_proposal(b,l)*1.1
+    !      end if
+    !      !if(t==T_burn/2) then
+    !      !  print *,'iteration:',t
+    !      !  print *,'Replica:',l
+    !      !  print *,'block:',b
+    !      !  print '("accept ratio(%) = ",f6.2)',accept_ratio
+    !      !  print '(i5,"/",i5)', accepted_proposals(b,l),total_proposals(b,l)
+    !      !  print '("c_proposal = ",f9.5)',c_proposal(b,l)
+    !      !end if
+    !    end do
+    !  end do
+    !  call InitializeCounters(1)
+    !  if(t==T_burn/2) then
+    !    print *,'c_proposal tuning step completed'
+    !  end if
+    !end if
 
     if(t==T_burn) then
       print *,'burn-in step completed'
     end if
 
     ! output exchange history
-    if(mod(t,t_btune)==0) then
+    if(mod(t,t_btune)==0 .and. t<=T_burn/2) then
       write(exchange_unit,fmt_exchange) t,real(cnt_exchange(1:L_rep-1))/real(total_exchange(1:L_rep-1))*1.0d2
       !print *, 'exchange output'
       !print fmt_exchange,t, real(cnt_exchange(1:L_rep))/real(50)*1.0d2
@@ -288,8 +290,8 @@ program BayesianDeconvolution
             do l=1,L_rep
               write(31,*) l,beta(l)
             end do
-            do l=1,L_rep;do b=1,(2+K1+K2)
-              write(51,*) l,b,c_proposal(b,l)
+            do l=1,L_rep;;do i=1,(4+5+4*K1+4*K2)
+              write(51,*) l,i,c_proposal(i,l)
             end do;end do
           end if
         end if
@@ -297,9 +299,15 @@ program BayesianDeconvolution
       cnt_exchange = 0
       total_exchange = 0
     end if
-
+    
     ! store and output data
-    if(t > T_burn) then 
+    if(t<=T_burn/2) then
+      stats_count = stats_count+1
+      do l=1,L_rep
+        !print *,'main l',l
+        call AppendHistoryForStats(t,l,theta_array(l))
+      end do
+    else if(t > T_burn) then 
       call AppendHistoryEntry(t, theta_array(L_rep))
     end if
      !call AppendHistoryEntry(t, theta_array(L_rep))

@@ -33,6 +33,7 @@
 
 # editor
 tags
+.vscode
 
 # fpm
 build
@@ -44,7 +45,8 @@ run/spec*
 run/exchange.txt
 run/index.txt
 run/now.txt
-run/ess_history.txt
-run/tau_int_history.txt
+run/ess*.txt
+run/tau*.txt
+run/c_proposal*.txt
 run?
 run??
