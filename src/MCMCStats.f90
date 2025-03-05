@@ -9,7 +9,7 @@ module MCMCStats
   integer(int32),private, parameter :: stats_tau_unit = 63
   integer(int32),private, parameter :: stats_ess_unit = 64
   integer(int32),private, parameter :: c_proposal_unit = 65
-  real(fp_kind), parameter :: rate_cp = 0.01d0
+  real(fp_kind), parameter :: rate_cp = 0.005d0
   real(fp_kind), parameter :: tau_target = 10.0
   integer(int32) :: stats_count = 0
   integer(int32) :: stats_output_count = 0
@@ -114,6 +114,11 @@ contains
       acf = ComputeAutocorrelation(p_temp,acf_size)
       tau_int(i) = ComputeIntegratedAutocorrelationTime(acf)
       ess(i) = ComputeEffectiveSampleSize(p_temp,tau_int(i))
+
+      if(tau_int(i)==401.0) then
+        c_proposal(i,l) = c_proposal(i,l)*0.5d0
+        cycle
+      end if
 
       if(tau_int(i)>0.0d0) then
         !print *,'l,i:',l,i
