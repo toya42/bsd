@@ -75,7 +75,8 @@ contains
     implicit none
     real(fp_kind), intent(in) :: x, a, b
     if (x < a .or. x > b) then
-       UniformLogPDF = -huge(1.0d0)
+       !print *, 'out of range'
+       UniformLogPDF = -1.0d-4*huge(1.0d0)
     else
        UniformLogPDF = -log(b - a)
     end if
@@ -86,11 +87,12 @@ contains
   ! Function: GetProposalSigma
   ! Purpose: Given the prior sigma for a parameter, return the proposal sigma.
   !----------------------------------------------------------
-  real(fp_kind) function GetProposalSigma(sigma_prior,b,l)
+  real(fp_kind) function GetProposalSigma(sigma_prior,idx,l)
     implicit none
-    integer(int32), intent(in) :: b,l
+    integer(int32), intent(in) :: idx,l
     real(fp_kind), intent(in) :: sigma_prior
-    GetProposalSigma = c_proposal(b,l) * sigma_prior
+    !print *,idx
+    GetProposalSigma = c_proposal(idx,l) * sigma_prior
   end function GetProposalSigma
 
 

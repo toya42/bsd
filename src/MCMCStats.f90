@@ -5,11 +5,11 @@ module MCMCStats
   use ModelFunctions
   use PriorProposal, only : c_proposal
   implicit none
-  integer(int32), parameter :: length_stats_cal=1000
+  integer(int32), parameter :: length_stats_cal=500
   integer(int32),private, parameter :: stats_tau_unit = 63
   integer(int32),private, parameter :: stats_ess_unit = 64
   integer(int32),private, parameter :: c_proposal_unit = 65
-  real(fp_kind), parameter :: rate_cp = 0.005d0
+  real(fp_kind), parameter :: rate_cp = 0.01d0
   real(fp_kind), parameter :: tau_target = 10.0
   integer(int32) :: stats_count = 0
   integer(int32) :: stats_output_count = 0
@@ -17,6 +17,7 @@ module MCMCStats
   real(fp_kind), private, allocatable, dimension(:,:,:) :: history_buffer
   integer(int32) :: parameter_length
   character(len=20), private :: fmt
+  real(fp_kind), allocatable, dimension(:) :: accept_ratio_block, accept_ratio
 
 contains
 
@@ -35,9 +36,11 @@ contains
     stats_count = 0
     stats_output_count = 0
 
-     write(fmt,'(I0)') parameter_length
-     fmt = '('//trim(fmt)//'(E20.8e3))'
+    write(fmt,'(I0)') parameter_length
+    fmt = '('//trim(fmt)//'(E20.8e3))'
 
+    allocate(accept_ratio_block(2+K1+K2))
+    allocate(accept_ratio(parameter_length-1))
 
     open(unit=stats_tau_unit, file='tau_tune_history.txt',form='formatted', status='replace', action='write')
     open(unit=stats_ess_unit, file='ess_tune_history.txt',form='formatted', status='replace', action='write')
@@ -97,9 +100,10 @@ contains
    ! Purpose: Write the buffered history entries to file and reset the buffer.
    !----------------------------------------------------------
   subroutine CalcStats(l)
+    use MCMC_Update, only : accepted_proposals, total_proposals, InitializeCounters
     implicit none
     integer(int32), intent(in) :: l
-    integer :: i,acf_size
+    integer :: i,acf_size,idx
     !real(fp_kind) :: tau_int,ess
     real(fp_kind), allocatable,dimension(:) :: acf, p_temp
     real(fp_kind),dimension(parameter_length-1) :: tau_int, ess
@@ -108,25 +112,64 @@ contains
     allocate(acf(0:acf_size), p_temp(length_stats_cal))
 
     !print *,'l',l
+    !print *, total_proposals(:,l)
+    !print *, accepted_proposals(:,l)
+    accept_ratio_block(:) = real(accepted_proposals(:,l))/real(total_proposals(:,l))*100
+    accept_ratio(1:5) = accept_ratio_block(1)
+    accept_ratio(6:9) = accept_ratio_block(2)
+    idx = 10
+    do i=1,K1
+      !print *,i,idx
+      accept_ratio(idx:idx+3) = accept_ratio_block(2+i)
+      idx = idx+4
+    end do
+    do i=1,K2
+      !print *,i,idx
+      accept_ratio(idx:idx+3) = accept_ratio_block(2+K1+i)
+      idx = idx+4
+    end do
+
+    !if(l==L_rep) then
+    !  do i=1,(2+K1+K2)
+    !    print *,accepted_proposals(i,l),total_proposals(i,l)
+    !  end do
+    !  do i=1,parameter_length-1
+    !    print *,accept_ratio(i)
+    !  end do
+    !end if
+
+
+    !if(idx/=parameter_length-1) then
+    !  print *,'error'
+    !  stop
+    !end if
+
 
     do i=1,parameter_length-1
       p_temp = history_buffer(i+1,l,:)
       acf = ComputeAutocorrelation(p_temp,acf_size)
       tau_int(i) = ComputeIntegratedAutocorrelationTime(acf)
       ess(i) = ComputeEffectiveSampleSize(p_temp,tau_int(i))
+    !      if(accept_ratio<20.0) then
+    !        c_proposal(b,l) = c_proposal(b,l)*0.9
+    !      else if(accept_ratio>50.0) then
+    !        c_proposal(b,l) = c_proposal(b,l)*1.1
+    !      end if
+      !if(l==L_rep .and. i==41) then
+      !    print *,'l,i:',l,i
+      !    print *,'c_prpsl',c_proposal(i,l)
+      !    print *,'tau_int',tau_int(i)
+      !    print *,'acc_rto',accept_ratio(i)
+      !end if 
 
-      if(tau_int(i)==401.0) then
-        c_proposal(i,l) = c_proposal(i,l)*0.5d0
-        cycle
-      end if
-
-      if(tau_int(i)>tau_target) then
-        !print *,'l,i:',l,i
-        !print *,'before',c_proposal(i,l)
+      if(tau_int(i)>0.0d0 .and. accept_ratio(i)>=20.0) then
         c_proposal(i,l) = c_proposal(i,l)*exp(rate_cp*(tau_int(i)-tau_target)/tau_target)
-        !print *,'after',c_proposal(i,l)
+        !c_proposal(i,l) = c_proposal(i,l)*1.05
+      else if (accept_ratio(i)<10.0) then
+        c_proposal(i,l) = c_proposal(i,l)*0.8
+      else if (accept_ratio(i)<20.0) then
+        c_proposal(i,l) = c_proposal(i,l)*0.9
       end if
-
     end do
 
     if(l==L_rep) then
@@ -135,8 +178,8 @@ contains
       write(stats_ess_unit,fmt) real(stats_output_count*length_stats_cal,fp_kind),    ess(:)
       write(c_proposal_unit,fmt) real(stats_output_count*length_stats_cal,fp_kind),c_proposal(:,l)
       stats_count = 0
+      call InitializeCounters(1)
     end if
-
 
  
 

@@ -26,7 +26,7 @@ program BayesianDeconvolution
   integer(int32),allocatable,dimension(:) :: idx_now
   type(ModelParameters), allocatable, dimension(:) :: theta_array
   type(ModelParameters) :: theta_mode
-  real(fp_kind) :: currentLogL,accept_ratio
+  real(fp_kind) :: currentLogL!,accept_ratio
   real(fp_kind), allocatable, dimension(:) :: avgLogL
   character(len=20) :: fmt_exchange, fmt_idx, fmt_now
   !integer(int32), parameter :: t_ctune = 10000
@@ -123,7 +123,7 @@ program BayesianDeconvolution
 
   call InitializeCounters(0)
   allocate(c_proposal((4+5+4*K1+4*K2),L_rep))
-  c_proposal = 0.2d-1
+  c_proposal = 0.5d-2
   !Block 
   !  integer ::ltmp,btmp
   !  open(61,file='c_proposal.txt',form='formatted')

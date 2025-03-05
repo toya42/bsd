@@ -239,7 +239,7 @@ contains
     real(fp_kind), intent(in) :: prior_sigma(:)
     real(fp_kind), intent(out), allocatable :: proposed_block(:)
     integer(int32), intent(in) :: b,l
-    integer(int32) :: i, block_size
+    integer(int32) :: i, block_size, idx
     real(fp_kind) :: perturb, sigma_i
 
     block_size = size(current_block)
@@ -248,11 +248,19 @@ contains
        stop
     end if
 
+    if(b==1) then
+      idx=0
+    else if(b==2) then
+      idx = 5
+    else if(b>2) then
+      idx = 9+(b-3)*4
+    end if
     allocate(proposed_block(block_size))
     proposed_block = current_block
     do i = 1, block_size
+       !print *,idx+i
        call NormalRandom(perturb)  ! Draw perturbation from N(0,1)
-       sigma_i = GetProposalSigma(prior_sigma(i),b,l)
+       sigma_i = GetProposalSigma(prior_sigma(i),idx+i,l)
        proposed_block(i) = current_block(i) + sigma_i * perturb
     end do
   end subroutine ProposeNew
@@ -271,7 +279,7 @@ contains
     proposed = current
     do i = 1, block_size
        call NormalRandom(perturb)  ! Draw perturbation from N(0,1)
-       sigma_i = GetProposalSigma(prior_sigma(i),1,l)
+       sigma_i = GetProposalSigma(prior_sigma(i),i,l)
        proposed(i) = current(i) + sigma_i * perturb
     end do
   end subroutine ProposeNewFull
